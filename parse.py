@@ -5,7 +5,7 @@ embedding = open(sys.argv[1])
 word_vecs = {}
 total_words = 0
 
-for line in embedding: # Reads the lines of the input file, skipping the first line
+for line in embedding:
 	vector = line.split()
 	total_words += 1
 	word_vecs[vector[0]] = map(lambda x: float(x), vector[1:])
