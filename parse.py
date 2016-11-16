@@ -13,7 +13,7 @@ for line in embedding:
 def l2norm(vector):
 	return numpy.sqrt(numpy.sum(map(lambda x : x * x, vector)))
 
-word_lengths = dict(map(lambda (k,v): (k, l2norm(v)), word_vecs.iteritems()))
+word_lengths = dict(map(lambda k,v: (k, l2norm(v)), word_vecs.iteritems()))
 
 def print_sorted(pair_dict):
 	sorted_lengths = sorted(word_lengths.items(), key = operator.itemgetter(1))
