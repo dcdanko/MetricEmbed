@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from collections import namedtuple
 
 def allPairwiseDistSqrd(embed1, embed2):
@@ -11,7 +10,9 @@ def allPairwiseDistSqrd(embed1, embed2):
     :param embed2: Assumes common basis with embed1
     :return:
     """
-    return np.sum(embed1**2, axis=1,keepdims=True)+np.sum(embed2**2, axis=1,keepdims=True).T-2*np.dot(embed1,embed2.T)
+    distances = (np.sum(embed1**2, axis=1)[:,np.newaxis])+(np.sum(embed2**2, axis=1)[:,np.newaxis]).T-2*np.dot(embed1,embed2.T)
+    distances[np.logical_and(distances < 0, distances > -1e-12)]=0
+    return distances
 
 def pairwiseDistanceChange(embed1, embed2):
     """
@@ -44,7 +45,7 @@ sumStats=namedtuple('sumStats','mean stddev median min max')
 def getSumStats(elements):
     return sumStats(np.mean(elements), np.std(elements), np.median(elements), np.min(elements), np.max(elements))
 
-unitize=lambda sampleMat: sampleMat/np.linalg.norm(sampleMat,axis=1,keepdims=True)
+unitize=lambda sampleMat: sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
 
 if __name__=="__main__":
     testEmbed1=np.random.dirichlet(np.ones(3),size=(1000,))
