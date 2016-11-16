@@ -1,6 +1,6 @@
 import sys, math, numpy, operator
 
-""" script for reading in the embedding from word2vec 
+""" script for reading in the embedding from word2vec and GLoVe
 
 key outputs:
 word_vecs -- a dictionary of form "word" -> embedLocation
