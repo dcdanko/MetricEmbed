@@ -1,5 +1,13 @@
 import sys, math, numpy, operator
 
+""" script for reading in the embedding from word2vec 
+
+key outputs:
+word_vecs -- a dictionary of form "word" -> embedLocation
+word_lengths --  a dictionary of the form "word" -> l2norm
+print-sorted -- a function that prints the top 20 and bottom 20 word_lengths according to the word_lengths
+"""
+
 embedding = open(sys.argv[1])
 
 word_vecs = {}
@@ -21,5 +29,4 @@ def print_sorted(pair_dict):
         print("\n")
 	print("\n".join(map(str, sorted_lengths[-20:-1])))
 
-print_sorted(word_lengths)
-
+print_sorted(word_lengths) 
