@@ -8,15 +8,16 @@ word_lengths --  a dictionary of the form "word" -> l2norm
 print-sorted -- a function that prints the top 20 and bottom 20 word_lengths according to the word_lengths
 """
 
-embedding = open(sys.argv[1])
+filename = sys.argv[1]
 
-word_vecs = {}
-total_words = 0
+def parse(filename):
+	word_vecs = {}
+	for line in open(filename):
+		vector = line.split()
+		word_vecs[vector[0]] = map(float, vector[1:])
+	return word_vecs
 
-for line in embedding:
-	vector = line.split()
-	total_words += 1
-	word_vecs[vector[0]] = map(lambda x: float(x), vector[1:])
+word_vecs = parse(filename)
 
 def l2norm(vector):
 	return numpy.sqrt(numpy.sum(map(lambda x : x * x, vector)))
