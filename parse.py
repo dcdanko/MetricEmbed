@@ -8,8 +8,6 @@ word_lengths --  a dictionary of the form "word" -> l2norm
 print-sorted -- a function that prints the top 20 and bottom 20 word_lengths according to the word_lengths
 """
 
-filename = sys.argv[1]
-
 def parse(filename):
 	word_vecs = {}
 	for line in open(filename):
@@ -17,17 +15,14 @@ def parse(filename):
 		word_vecs[vector[0]] = map(float, vector[1:])
 	return word_vecs
 
-word_vecs = parse(filename)
-
 def l2norm(vector):
 	return numpy.sqrt(numpy.sum(map(lambda x : x * x, vector)))
 
-word_lengths = dict(map(lambda k,v: (k, l2norm(v)), word_vecs.iteritems()))
+def get_word_lengths(word_vecs):
+	return dict(map(lambda (k,v): (k, l2norm(v)), word_vecs.iteritems()))
 
-def print_sorted(pair_dict):
+def print_sorted(word_lengths):
 	sorted_lengths = sorted(word_lengths.items(), key = operator.itemgetter(1))
 	print("\n".join(map(str, sorted_lengths[0:20])))
         print("\n")
 	print("\n".join(map(str, sorted_lengths[-20:-1])))
-
-print_sorted(word_lengths) 
