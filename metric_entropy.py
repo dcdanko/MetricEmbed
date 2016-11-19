@@ -60,12 +60,10 @@ import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
 import parse
-from collections import namedtuple
 
 from matplotlib.pyplot import hist
 from matplotlib.pyplot import scatter
 
-Sphere=namedtuple('Sphere','centerWord centerVec points')
 class Sphere:
     def __init__(self,centerWord,centerVec):
         self.centerWord = centerWord
