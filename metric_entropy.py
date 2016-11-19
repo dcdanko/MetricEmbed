@@ -60,7 +60,6 @@ import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
 import parse
-from numba import jit
 from collections import namedtuple
 
 from matplotlib.pyplot import hist
