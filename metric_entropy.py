@@ -59,9 +59,10 @@ import pandas as pd
 import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
+import parse
 
-from bashplotlib.histogram import plot_hist
-from bashplotlib.scatterplot import plot_scatter
+from matplotlib.pyplot import hist
+from matplotlib.pyplot import scatter
 
 class Sphere:
     def __init__(self,centerWord,centerVec):
@@ -103,14 +104,15 @@ def printSummaryOfCoveringSpheres(coveringSpheres,radius,drawHist=False):
     sphereSizes = [len(sphere.points) for sphere in coveringSpheres]
     print('Total points covered: {}'.format(sum( sphereSizes)))
     if drawHist:
-        plot_hist(sphereSizes,bincount=max(sphereSizes)/10,xlab=True)
+        hist(sphereSizes,bincount=max(sphereSizes)/10,xlab=True)
 
 
 
 
 def main():
     args = buildArgs()
-    embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
+    #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
+    embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
     nSpheres = []
     for radius in args.radius:
         coveringSpheres = findCoveringSpheres(embeddings,scipy.spatial.distance.euclidean,radius)
@@ -121,7 +123,7 @@ def main():
     with open(coverf,'w') as cf:
         for r,s in nSpheres:
             cf.write('{},{}\n'.format(r,s))
-#    plot_scatter(coverf)
+#    scatter(coverf)
     
 
 ################################################################################
