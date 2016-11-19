@@ -115,7 +115,7 @@ def main():
     embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
     nSpheres = []
     for radius in args.radius:
-        coveringSpheres = findCoveringSpheres(embeddings,scipy.spatial.distance.euclidean,radius)
+        coveringSpheres = findCoveringSpheres(embeddings.T,scipy.spatial.distance.euclidean,radius)
         printSummaryOfCoveringSpheres(coveringSpheres,args.radius,drawHist=args.hist)
         nSpheres.append((radius,len(coveringSpheres)))
 
