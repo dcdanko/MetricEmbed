@@ -60,10 +60,13 @@ import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
 import parse
+from numba import jit
+from collections import namedtuple
 
 from matplotlib.pyplot import hist
 from matplotlib.pyplot import scatter
 
+Sphere=namedtuple('Sphere','centerWord centerVec points')
 class Sphere:
     def __init__(self,centerWord,centerVec):
         self.centerWord = centerWord
@@ -71,8 +74,14 @@ class Sphere:
         self.points = [(centerWord,centerVec)]
 
     def add(self,centerWord,centerVec):
-        self.points.append( (centerWord,centerVec))
-        
+        if centerWord!= self.centerWord:
+            self.points.append( (centerWord,centerVec))
+        else:
+            print('warning: attempted to re-add centerword. skipping')
+
+    def extend(self, centerWordIt, centerVecIt):
+        for centerWord, centerVec in zip(centerWordIt, centerVecIt):
+            self.add(centerWord,centerVec)
 
 def findCoveringSpheres(embeddings,dist,maxRadius):
     coveringSpheres = []
@@ -95,7 +104,63 @@ def findCoveringSpheres(embeddings,dist,maxRadius):
                 sys.stderr.write('.')
     sys.stderr.write('\n')
     return coveringSpheres
-        
+
+def findCoveringSpheres_numpy(embeddings, metricChoice, maxRadius):
+    """ alternative implementation of findCoveringSpheres that using numpy in the inner loop
+
+    should be faster
+
+    :param: embeddings: a pandas dataframe with the embedding locations
+    :param: metricChoice: a distance function choice (see "metric" optional arguments in scipy.spatial.distance.cdist)
+    :param: maxRadius: radius for the spheres.
+    :return returns the tuple of words used as the centers of sphere and a numpy array with the sphere centers.
+    """
+    sphereWords=[]
+    sphereCenters=np.zeros(embeddings.shape) # over-allocate
+    shuffledEmbed = embeddings.reindex( np.random.permutation( embeddings.index))
+
+    iterator=enumerate(shuffledEmbed.iterrows())
+    i, (word, wordVec)=next(iterator)
+    sphereWords.append(word)
+    sphereCenters[0,:]=wordVec
+    for i, (word, wordVec) in iterator:
+        if np.all(scipy.spatial.distance.cdist(wordVec[np.newaxis,:], sphereCenters[0:len(sphereWords),:], metric=metricChoice)>maxRadius): # calculate using builtins and numpy
+            sphereWords.append(word)
+            sphereCenters[len(sphereWords)-1,:]=wordVec
+        if i % 100 == 0:
+            if i % 1000 == 0:
+                sys.stderr.write('\r')
+            else:
+                sys.stderr.write('.')
+    sphereCenters=sphereCenters[0:len(sphereWords),:]
+    return (sphereWords, sphereCenters)
+
+def findCoveringSpheres_inSphere(embeddings_numpy, centerLocations, metricChoice, maxRadius):
+    """ finds which words are in which sphere using numpy
+
+    should be faster, even if computing more data (numpy is really fast if done properly)
+    :param embeddings_numpy: a numpy array with the locations of the embedded words
+    :param centerLocations: a numpy array of the locations of hte sphere centers
+    :param: metricChoice: a distance function choice (see "metric" optional arguments in scipy.spatial.distance.cdist)
+    :param: maxRadius: radius for the spheres.
+    :return: a boolean matrix where an entry is 1 iff the word (1st index) is in the sphere (2nd index)
+    """
+    return scipy.spatial.distance.cdist(embeddings_numpy, centerLocations, metric=metricChoice) <= maxRadius
+
+def findCoveringSpheres_fast(embeddings, metricChoice, maxRadius):
+    (centWords, centLocs)=findCoveringSpheres_numpy(embeddings, metricChoice, maxRadius)
+    unusedWords=embeddings[~ embeddings.index.isin(centWords)] # already have centerwords in the spheres. What about others? Gets dataframe of unused words
+    inSphere=findCoveringSpheres_inSphere(unusedWords.as_matrix(), centLocs, metricChoice, maxRadius) # horrible brute force copmutation, but C is faster than Python and numpy is in C.
+
+    # go through and append words which are in each sphere. This shouldn't be faster than just iterating through, but funny things happen in python, so let's see...
+    returnable=[]
+    for sphereIndx, (centWord, centLoc) in enumerate(zip(centWords, centLocs)):
+        thisSphere=Sphere(centWord, centLoc)
+        inThisSphere=inSphere[:,sphereIndx]
+        thisSphere.extend(unusedWords.index[inThisSphere], unusedWords.loc[inThisSphere].values)
+        returnable.append(thisSphere)
+    return returnable
+
 def printSummaryOfCoveringSpheres(coveringSpheres,radius,drawHist=False):
 #    print('Distance function: {}'.format(distFunc))
     print('Radius: {}'.format(radius))
@@ -106,16 +171,14 @@ def printSummaryOfCoveringSpheres(coveringSpheres,radius,drawHist=False):
     if drawHist:
         hist(sphereSizes,bincount=max(sphereSizes)/10,xlab=True)
 
-
-
-
 def main():
     args = buildArgs()
     #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
     embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
     nSpheres = []
     for radius in args.radius:
-        coveringSpheres = findCoveringSpheres(embeddings.T,scipy.spatial.distance.euclidean,radius)
+        # coveringSpheres = findCoveringSpheres(embeddings.T,scipy.spatial.distance.euclidean,radius)
+        coveringSpheres = findCoveringSpheres_fast(embeddings.T,'euclidean', radius)
         printSummaryOfCoveringSpheres(coveringSpheres,args.radius,drawHist=args.hist)
         nSpheres.append((radius,len(coveringSpheres)))
 
