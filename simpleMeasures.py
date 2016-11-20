@@ -1,4 +1,6 @@
 import numpy as np
+import sys
+import parse
 from collections import namedtuple
 
 def allPairwiseDistSqrd(embed1, embed2):
@@ -54,19 +56,22 @@ def getSumStats(elements):
 unitize=lambda sampleMat: sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
 
 if __name__=="__main__":
-    testEmbed1=np.random.dirichlet(np.ones(3),size=(1000,))
-    testEmbed2=np.random.dirichlet(np.ones(3),size=(1000,))
+    dict1 = parse.parse(sys.argv[1])
+    dict2 = parse.parse(sys.argv[2])
+    sorted_vocab = sorted(dict1)
+    embed1 = np.array(map(lambda word: dict1[word], sorted_vocab))
+    embed2 = np.array(map(lambda word: dict2[word], sorted_vocab))
     print('ordinary tests')
-    print(getSumStats(np.abs(pairwiseDistanceChange(testEmbed1, testEmbed2))))
-    print(getSumStats(pairwiseDistanceChange(testEmbed1, testEmbed2)**2))
-    print(getSumStats(np.abs(minPairwiseDistChange(testEmbed1, testEmbed2))))
-    print(getSumStats(minPairwiseDistChange(testEmbed1, testEmbed2)**2))
+    #print(getSumStats(np.abs(pairwiseDistanceChange(embed1, embed2))))
+    print(getSumStats(pairwiseDistanceChange(embed1, embed2)**2))
+    #print(getSumStats(np.abs(minPairwiseDistChange(embed1, embed2))))
+    print(getSumStats(minPairwiseDistChange(embed1, embed2)**2))
 
     # for cosine
-    normTestEmbed1=unitize(testEmbed1)
-    normTestEmbed2=unitize(testEmbed2)
+    normTestEmbed1=unitize(embed1)
+    normTestEmbed2=unitize(embed2)
     print('cosine tests')
-    print(getSumStats(np.abs(pairwiseDistanceChange(normTestEmbed1, normTestEmbed2))))
+    #print(getSumStats(np.abs(pairwiseDistanceChange(normTestEmbed1, normTestEmbed2))))
     print(getSumStats(pairwiseDistanceChange(normTestEmbed1, normTestEmbed2)**2))
-    print(getSumStats(np.abs(minPairwiseDistChange(normTestEmbed1, normTestEmbed2))))
+    #print(getSumStats(np.abs(minPairwiseDistChange(normTestEmbed1, normTestEmbed2))))
     print(getSumStats(minPairwiseDistChange(normTestEmbed1, normTestEmbed2)**2))
