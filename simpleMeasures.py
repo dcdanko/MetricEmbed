@@ -14,6 +14,12 @@ def allPairwiseDistSqrd(embed1, embed2):
     distances[np.logical_and(distances < 0, distances > -1e-12)]=0
     return distances
 
+def averagePairwiseDistance(embed):
+    """
+    Computes the average pairwise distance of the input embedding.
+    """
+    return np.mean(np.sqrt(allPairwiseDistSqrd(embed, embed)))
+
 def pairwiseDistanceChange(embed1, embed2):
     """
 
