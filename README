@@ -1,0 +1,12 @@
+The data contained in output.txt contains the metric entropy of various embeddings at a few fixed radii.
+There is a line denoting the algorithm which created the embedding along with some distinguishing features about the embedding.
+What you see here is just a few preliminary data points - we have yet to fully implement our various metrics.
+
+These are just preliminary results on individual embeddings - they are not the form our final results are going to take.
+As we describe in the document, we will compute the metric entropies of embeddings for radii scaled with respect to the average pairwise distances of the embeddings.
+
+Our output (later) could take the following form: For a particular metric, given an embedding output the distance between the embedding and and a noisy version of itself
+for various amounts of noise. Broadly, a specific line of an output file will describe a pair of word embeddings and the distance between them. The output file won't
+actually contain the word embeddings - generally the pairs will be generated according to some specific scheme as described above.
+
+See the writeup for a more detailed description of each experiment we are goint to run.

@@ -1,0 +1,89 @@
+Metric entropy of various embeddings:
+
+w2v, Brown Corpus, 50 dimensions:
+Radius: 1.0
+Total spheres: 4849
+Singletons: 3870
+Total points covered: 114302
+Radius: 2.0
+Total spheres: 1826
+Singletons: 1295
+Total points covered: 125328
+Radius: 5.0
+Total spheres: 317
+Singletons: 158
+Total points covered: 75325
+Radius: 10.0
+Total spheres: 48
+Singletons: 18
+Total points covered: 40740
+Radius: 20.0
+Total spheres: 2
+Singletons: 0
+Total points covered: 15886
+
+w2v, Brown Corpus, 100 dimensions:
+Radius: 1.0
+Total spheres: 4894
+Singletons: 3917
+Total points covered: 94775
+Radius: 2.0
+Total spheres: 1849
+Singletons: 1323
+Total points covered: 133518
+Radius: 5.0
+Total spheres: 320
+Singletons: 163
+Total points covered: 59564
+Radius: 10.0
+Total spheres: 52
+Singletons: 20
+Total points covered: 49736
+Radius: 20.0
+Total spheres: 2
+Singletons: 0
+Total points covered: 13755
+
+w2v, text8 corpus, 100 dimensions:
+Radius: 1.0
+Total spheres: 66902
+Singletons: 61980
+Total points covered: 114762
+Radius: 2.0
+Total spheres: 37299
+Singletons: 31633
+Total points covered: 4369511
+Radius: 5.0
+Total spheres: 15006
+Singletons: 11897
+Total points covered: 6050536
+Radius: 10.0
+Total spheres: 4088
+Singletons: 1472
+Total points covered: 2357527
+Radius: 20.0
+Total spheres: 15
+Singletons: 0
+Total points covered: 260948
+
+GloVe, brown corpus, 50 dimensions:
+Radius: 1.0
+Total spheres: 5375
+Singletons: 3856
+Total points covered: 102798
+Radius: 2.0
+Total spheres: 936
+Singletons: 385
+Total points covered: 167574
+Radius: 5.0
+Total spheres: 32
+Singletons: 10
+Total points covered: 22020
+Radius: 10.0
+Total spheres: 1
+Singletons: 0
+Total points covered: 13709
+Radius: 20.0
+Total spheres: 1
+Singletons: 0
+Total points covered: 13709
