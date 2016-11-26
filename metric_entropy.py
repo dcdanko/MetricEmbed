@@ -61,9 +61,6 @@ import scipy.spatial.distance
 import subprocess as sp
 import parse
 
-from matplotlib.pyplot import hist
-from matplotlib.pyplot import scatter
-
 class Sphere:
     def __init__(self,centerWord,centerVec):
         self.centerWord = centerWord
@@ -130,6 +127,7 @@ def findCoveringSpheres_numpy(embeddings, metricChoice, maxRadius):
             else:
                 sys.stderr.write('.')
     sphereCenters=sphereCenters[0:len(sphereWords),:]
+    
     return (sphereWords, sphereCenters)
 
 def findCoveringSpheres_inSphere(embeddings_numpy, centerLocations, metricChoice, maxRadius):
@@ -168,6 +166,14 @@ def printSummaryOfCoveringSpheres(coveringSpheres,radius,drawHist=False):
     if drawHist:
         hist(sphereSizes,bincount=max(sphereSizes)/10,xlab=True)
 
+def estimateMetricEntropy(embeddings,radius,metric='euclidean',ntrials=5):
+    estimates = []
+    for arb in range(ntrials):
+        coveringSpheres = findCoveringSpheres_fast(embeddings.T,metric, radius)
+        estimates.append(len(coveringSpheres))
+
+    return min(estimates)
+        
 def main():
     args = buildArgs()
     #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
