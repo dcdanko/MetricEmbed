@@ -47,7 +47,8 @@ import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
 import parse
-
+import simpleMeasures as sm
+import math
 
 def findPointClouds(embeddings,nSamples,radii,metric):
     samples = embeddings.sample(n=nSamples,axis=1)
@@ -59,19 +60,44 @@ def findPointClouds(embeddings,nSamples,radii,metric):
 
     return nPoints
 
-def getGrowthRateByIndex(cloudSizes):
-    for rad in sorted(cloudSizes):
-        
+def findPointCloud(embedding,radius):
+    """
+    Computes the size of the point cloud of radius radius about the origin.
+    """
+    l2norms = np.sqrt(np.square(embedding).sum(axis=0))
+    return sum(map(lambda x : 1 if x < radius else 0,l2norms))
 
+def getMultiplicativeGrowthRate(cloudSizes):
+    """
+    Computes the average multiplicative growth rate (over indices)
+    """
+    sortedCloudSizes = filter(lambda x : x > 0.5, cloudSizes)
+    ratios = np.divide(sortedCloudSizes[1:],sortedCloudSizes[:-1])
+    return sum(ratios) / (len(sortedCloudSizes) - 1)
 
+def fractalDimension(embedding,initRad,radFactor,radCount):
+    """
+    Computes the fractal dimension w.r.t. the origin of the given embedding.
+    Scanns radii initRad*radFactor^0 -> initRad*radFactor^(radCount-1)
+    """
+    avgDist = sm.averagePairwiseDistance(embedding)
+    cloudSizes = np.zeros(radCount)
+    radius = initRad * avgDist
+    for i in range(0,radCount):
+        cloudSizes[i] = findPointCloud(embedding,radius)
+        radius = radius * radFactor
+    growthRate = getMultiplicativeGrowthRate(cloudSizes)
+    return math.log(growthRate,radFactor)
 
 def main():
     args = buildArgs()
     #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
     embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
-    cloudSizes = findPointClouds(embeddings,args.samples,args.radius,'euclidean')
-    for r,s in cloudSizes.items():
-        print('{},{}'.format(r,s))
+    dim = fractalDimension(embeddings,0.01,1.2,10)
+    print('{}: {}'.format('Fractal Dimension',dim))
+    #cloudSizes = findPointClouds(embeddings,args.samples,args.radius,'euclidean')
+    #for r,s in cloudSizes.items():
+    #    print('{},{}'.format(r,s))
     
 ################################################################################
 
