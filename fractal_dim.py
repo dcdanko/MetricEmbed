@@ -59,7 +59,9 @@ def findPointClouds(embeddings,nSamples,radii,metric):
 
     return nPoints
 
-
+def getGrowthRateByIndex(cloudSizes):
+    for rad in sorted(cloudSizes):
+        
 
 
 
