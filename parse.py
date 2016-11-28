@@ -10,7 +10,12 @@ print-sorted -- a function that prints the top 20 and bottom 20 word_lengths acc
 
 def parse(filename):
 	word_vecs = {}
-	for line in open(filename):
+	contents = open(filename)
+	line = next(contents)
+	vector = line.split()
+	if len(vector) != 2:
+		word_vecs[vector[0]] = list(map(float, vector[1:]))
+	for line in contents:
 		vector = line.split()
 		word_vecs[vector[0]] = list(map(float, vector[1:]))
 	return word_vecs
