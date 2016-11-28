@@ -51,6 +51,7 @@ import parse
 import simpleMeasures as sm
 import math
 import matplotlib.pyplot as plt
+import syntheticPoints as synp
 
 def findPointClouds(embeddings,nSamples,radii,metric):
     samples = embeddings.sample(n=nSamples,axis=1)
@@ -74,30 +75,36 @@ def getMultiplicativeGrowthRate(cloudSizes):
     """
     Computes the average multiplicative growth rate (over indices)
     """
+    #print(cloudSizes)
     #sortedCloudSizes = filter(lambda x : x > 0.5, cloudSizes)
-    sortedRadii = filter(lambda x : cloudSizes[x] > 0.5, sorted(cloudSizes))
-    sortedCloudSizes = filter(lambda x : x > 0.5, map(lambda x : float(cloudSizes[x]), sortedRadii))
-    print(sortedCloudSizes)
+    sortedRadii = filter(lambda x : cloudSizes[x] > 1.5, sorted(cloudSizes))
+    sortedCloudSizes = filter(lambda x : x > 1.5, map(lambda x : float(cloudSizes[x]), sortedRadii))
+    #sortedRadii = sorted(cloudSizes)
+    #sortedCloudSizes = map(lambda x : float(cloudSizes[x]), sortedRadii)
+    #print(sortedCloudSizes)
     countRatios = np.divide(sortedCloudSizes[1:],sortedCloudSizes[:-1])
     radiusRatios = np.divide(sortedRadii[1:],sortedRadii[:-1])
     logs = np.divide(np.log(countRatios),np.log(radiusRatios))
     
     # PLOTTING HERE
-    plt.plot(logs)
-    plt.show()
+    #plt.plot(logs)
+    #plt.plot(sortedCloudSizes[1:],logs)
+    #plt.show()
     # END PLOTTING
 
     #return sum(countRatios) / (len(sortedCloudSizes) - 1)
-    return sum(logs) / (len(sortedRadii) - 1)
+    #return sum(logs) / (len(sortedRadii) - 1)
+    return sortedCloudSizes[1:],logs
 
-def fractalDimension(embedding,initRad,radFactor,radCount):
+def fractalDimension(embedding,initRad,radFactor,radCount,eName):
     """
     Computes the fractal dimension w.r.t. the origin of the given embedding.
     Scanns radii initRad*radFactor^0 -> initRad*radFactor^(radCount-1)
     """
     avgDist = sm.averagePairwiseDistance(embedding)
-    center = .1 * np.random.randn(embedding.shape[0])
-    #cloudSizes = np.zeros(radCount)
+    embedCenter = np.sum(embedding,axis=1)/(embedding.shape[1])
+    #samples = embedding.sample(10,axis=1)
+    center = (.002*avgDist*np.random.randn(embedding.shape[0])) + embedCenter
     cloudSizes = {}
     radius = initRad * avgDist
     for i in range(0,radCount):
@@ -105,16 +112,31 @@ def fractalDimension(embedding,initRad,radFactor,radCount):
         cloudSizes[radius] = findPointCloud(embedding,radius,center)
         #radius = radius * radFactor
         radius = radius + (radFactor * avgDist)
-    growthRate = getMultiplicativeGrowthRate(cloudSizes)
+    sizes,logs = getMultiplicativeGrowthRate(cloudSizes)
+    plt.plot(sizes,logs,label=eName)
     #return math.log(growthRate,radFactor)
-    return growthRate
+    #return growthRate
+
+def plotEmbeddings(files):
+    for filename in files:
+        embedding=pd.DataFrame.from_dict(parse.parse(filename))
+        fractalDimension(embedding,0.,.00025,200,filename)
+    plt.ylabel('fractal dimension')
+    plt.xlabel('points seen')
+    plt.legend()
+    plt.show()
 
 def main():
     args = buildArgs()
     #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
-    embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
-    dim = fractalDimension(embeddings,0.,.00025,100)
-    print('{}: {}'.format('Fractal Dimension',dim))
+    #embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
+    #dim = fractalDimension(embeddings,0.,.00025,200)
+    #fractalDimension(synp.randomHypercube(200000,50).T,0.,.0005,400)
+    #fractalDimension(synp.randomHypercube(100000,50).T,0.,.00005,400,'cube')
+    #fractalDimension(synp.randomSphere(200000,20).T,0.,.0005,400)
+    #print('{}: {}'.format('Fractal Dimension',dim))
+    #plt.legend()
+    #plt.show()
     #cloudSizes = findPointClouds(embeddings,args.samples,args.radius,'euclidean')
     #for r,s in cloudSizes.items():
     #    print('{},{}'.format(r,s))
