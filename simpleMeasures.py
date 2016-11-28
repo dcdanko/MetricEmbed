@@ -69,12 +69,7 @@ def getSumStats(elements):
 
 unitize=lambda sampleMat: sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
 
-if __name__=="__main__":
-    dict1 = parse.parse(sys.argv[1])
-    dict2 = parse.parse(sys.argv[2])
-    sorted_vocab = sorted(dict1)
-    embed1 = np.array(map(lambda word: dict1[word], sorted_vocab))
-    embed2 = np.array(map(lambda word: dict2[word], sorted_vocab))
+def runTests(embed1, embed2):
     print('ordinary tests')
     #print(getSumStats(np.abs(pairwiseDistanceChange(embed1, embed2))))
     print(getSumStats(pairwiseDistanceChange(embed1, embed2)**2))
@@ -89,3 +84,7 @@ if __name__=="__main__":
     print(getSumStats(pairwiseDistanceChange(normTestEmbed1, normTestEmbed2)**2))
     #print(getSumStats(np.abs(minPairwiseDistChange(normTestEmbed1, normTestEmbed2))))
     print(getSumStats(minPairwiseDistChange(normTestEmbed1, normTestEmbed2)**2))
+
+if __name__=="__main__":
+    embeddings=parse.importTwo(sys.argv[1], sys.argv[2])
+    runTests(embeddings[0].evect, embeddings[1].evect)
