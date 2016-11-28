@@ -47,7 +47,21 @@ def minPairwiseDistChange(embed1,embed2):
     avgVect=(embed1.flatten()+embed2.flatten())/2
     flat2=embed2.flatten()
     optScale=np.dot(avgVect,flat2)/np.dot(avgVect,avgVect)
-    return optScale*avgVect-flat2
+    return optScale
+# design idea from overleaf checkup
+# %If the distance is defined:
+# %$$ d(x,y)=\sqrt{(x-y)^T (x-y)} $$
+#
+# %Then we simply compute the pairwise distance between each pair of words within an embedding:
+# %$$ d_{ij}=d(w_i, w_j) $$
+# %We can then compute summary statistics such as the mean, min, max, median and variance of the distances.
+# Different summary statistics will mean different features of the distances. For instance, a dataset with very
+# low variance will have words nearly equally spaced relative to each other.
+
+# %Pairwise distance is sensitive to the relative placement of words to each other, so by comparing the pairwise distances
+# between the same word in two different embeddings it is possible to compare how the "most similar words" will change. That
+# is, we expect the following to be highly correlated with which words embedding 1 ($E_1$) and embedding 2 ($E_2$) would rank
+# as most similar, particularly when looking at the closer pairs.tScale*avgVect-flat2
 
 sumStats=namedtuple('sumStats','mean stddev median min max')
 def getSumStats(elements):
@@ -55,12 +69,7 @@ def getSumStats(elements):
 
 unitize=lambda sampleMat: sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
 
-if __name__=="__main__":
-    dict1 = parse.parse(sys.argv[1])
-    dict2 = parse.parse(sys.argv[2])
-    sorted_vocab = sorted(dict1)
-    embed1 = np.array(map(lambda word: dict1[word], sorted_vocab))
-    embed2 = np.array(map(lambda word: dict2[word], sorted_vocab))
+def runTests(embed1, embed2):
     print('ordinary tests')
     #print(getSumStats(np.abs(pairwiseDistanceChange(embed1, embed2))))
     print(getSumStats(pairwiseDistanceChange(embed1, embed2)**2))
@@ -75,3 +84,7 @@ if __name__=="__main__":
     print(getSumStats(pairwiseDistanceChange(normTestEmbed1, normTestEmbed2)**2))
     #print(getSumStats(np.abs(minPairwiseDistChange(normTestEmbed1, normTestEmbed2))))
     print(getSumStats(minPairwiseDistChange(normTestEmbed1, normTestEmbed2)**2))
+
+if __name__=="__main__":
+    embeddings=parse.importTwo(sys.argv[1], sys.argv[2])
+    runTests(embeddings[0].evect, embeddings[1].evect)
