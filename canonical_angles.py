@@ -136,7 +136,7 @@ def main():
     in_vocab_to_index, in_embedding = import_embedding(embedding_path_template.format(0))
     q_in, _ = np.linalg.qr(in_embedding)
     for i in range(1, 50):
-        print "Starting comparison {}...".format(i)
+        print("Starting comparison {}...".format(i))
         out_vocab_to_index, out_embedding = import_embedding(embedding_path_template.format(i))
         out_embedding = align_second_to_first(in_vocab_to_index, out_vocab_to_index, out_embedding)
         q_out, _ = np.linalg.qr(out_embedding)
@@ -159,15 +159,15 @@ def main():
     all_files = w2v_embedding_files + glove_embedding_files # Add more embedding lists here
     all_names = ['word2vec', 'GloVe']                       # Add more treatment names here
     name_colors = [':', '--']
-    print "Loading embeddings..."
+    print("Loading embeddings...")
     unaligned_embeddings = []
     for embedding_file in all_files:
         unaligned_embeddings.append(import_embedding(embedding_file))
-    print "Aligning embeddings..."
+    print("Aligning embeddings...")
     new_vocab, embeddings = align_embeddings(unaligned_embeddings)
-    print "Orthoganalizing..."
+    print("Orthoganalizing...")
     qs = [np.linalg.qr(embedding)[0] for embedding in embeddings]
-    print "Finding angles and plotting spectrum..."
+    print("Finding angles and plotting spectrum...")
 
     for i in range(len(all_names)):
         sim_angle_averages, sim_angle_list = average_spectrum(qs[i*3:(i+1)*3])

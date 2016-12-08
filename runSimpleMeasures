@@ -1,0 +1,15 @@
+import parse as mep
+import sys
+import itertools as it
+import os
+
+import simpleMeasures as sm
+import syntheticPoints
+
+if __name__=="__main__":
+    # ('Embeddings/GloVe-dim=50-corpus=brown.txt')
+    files=mep.ls_fullpath('Embeddings')
+    for f1, f2 in it.combinations(files,2):
+        embeddings=mep.importTwo(f1, f2)
+        print('E1: '+str(f1)+r'\n'+'E2: '+str(f2))
+        sm.runTests(embeddings[0].evect,embeddings[1].evect)

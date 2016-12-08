@@ -1,4 +1,6 @@
-import sys, math, numpy, operator
+import numpy as np
+from collections import namedtuple
+import os
 
 """ script for reading in the embedding from word2vec and GLoVe
 
@@ -20,8 +22,23 @@ def parse(filename):
 		word_vecs[vector[0]] = list(map(float, vector[1:]))
 	return word_vecs
 
+embedding=namedtuple('embedding', 'dict evect vectkeys')
+def importTwo(filename1, filename2):
+	"""
+	imports two files as embeddings,
+	orders the words by the 1st file and then returns two embedding objects, the 1st corresponding to the 1st file and the 2nd correesponding to the second"""
+	dict1 = parse(filename1)
+	dict2 = parse(filename2)
+	sorted_vocab = sorted(dict1)
+	embed1 = np.array(list(map(lambda word: dict1[word], sorted_vocab)))
+	embed2 = np.array(list(map(lambda word: dict2[word], sorted_vocab)))
+	return (embedding(dict1, embed1, sorted_vocab), embedding(dict2, embed2, sorted_vocab))
+
+def ls_fullpath(dir):
+	return [os.path.join(dir,f) for f in os.listdir(dir)]
+
 def l2norm(vector):
-	return numpy.sqrt(numpy.sum(list(map(lambda x : x * x, vector))))
+	return np.sqrt(np.sum(list(map(lambda x : x * x, vector))))
 
 def get_word_lengths(word_vecs):
 	return dict(map(lambda k,v: (k, l2norm(v)), word_vecs.iteritems()))
