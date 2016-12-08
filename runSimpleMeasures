@@ -2,14 +2,131 @@ import parse as mep
 import sys
 import itertools as it
 import os
+import numpy as np
+import pandas as pd
 
 import simpleMeasures as sm
-import syntheticPoints
+import syntheticPoints as sp
+
+def embeddingSizes():
+    files=mep.ls_fullpath('Embeddings')
+    filesFiltered=list(filter(lambda s: s.find('corpus='+'brown') != -1 and s.find('dim='+'50') != -1, files))
+    results=[]
+    for file in filesFiltered:
+        print(file)
+        embedding=mep.parseToEmbedding(file)
+        print('beginning sumstats calculation')
+        thisSumStats=sm.getSumStats(sm.allPairwiseDistSqrd(embedding,embedding))
+        results.append(thisSumStats)
+    resPD=pd.DataFrame._from_arrays(results, index=sm.sumStats._fields, columns=filesFiltered)
+    print(resPD)
+    resPD.to_csv('embeddingShapes.csv')
+def embeddingSizesSynthetic():
+    filesFiltered=list(sp.iterRandoms(int(1e3), 50))
+    results=[]
+    for file in filesFiltered:
+        print('beginning sumstats calculation')
+        thisSumStats=sm.getSumStats(sm.allPairwiseDistSqrd(file,file))
+        results.append(thisSumStats)
+    resPD=pd.DataFrame._from_arrays(results, index=sm.sumStats._fields, columns=list(sp.iterRandomsLabels()))
+    print(resPD)
+    resPD.to_csv('embeddingShapesSynthetic.csv')
+
+def embeddingRuns():
+        # ('Embeddings/GloVe-dim=50-corpus=brown.txt')
+        files=mep.ls_fullpath('Embeddings')
+        embeddingFiles=list(filter(lambda s: s[-4:-1]=='.txt', files))
+    #     # corpiiStr=('brown', 'text8') # text8 explodes in memory.
+    #     corpiiStr=('brown')
+    #     # dimSizes=(50,100)
+    #     dimSizes=(50,)
+    #     embedGroups=[[]]*len(dimSizes)
+    #     for indx, dimSize in enumerate(dimSizes):
+    #         for corpusStr in corpiiStr:
+    #             embedGroups[indx].append(list(filter(lambda s: s.find('corpus='+corpusStr) != -1 and s.find('dim='+str(dimSize)) != -1, files)))
+    #     for indx, dimSize in enumerate(dimSizes):
+    #         for corpiiGroup in embedGroups[indx]:
+    #             for f1, f2 in it.combinations(corpiiGroup,2):
+    #                 embeddings=mep.importTwo(f1, f2)
+    #                 print('E1: '+str(f1))
+    #                 print('E2: '+str(f2))
+    #                 sm.runTests(embeddings[0].evect,embeddings[1].evect)
+        filesFiltered=list(filter(lambda s: s.find('corpus='+'brown') != -1 and s.find('dim='+'50') != -1, files))
+        for file in filesFiltered:
+            print(file)
+        # oStab=np.zeros((len(filesFiltered),len(filesFiltered)))
+        mDistChange=np.zeros((len(filesFiltered),len(filesFiltered)))
+        mDistChangeNormed=np.zeros((len(filesFiltered),len(filesFiltered)))
+        closeChange= np.zeros((len(filesFiltered),len(filesFiltered)))
+        closeChangeNormed= np.zeros((len(filesFiltered),len(filesFiltered)))
+        for i in range(len(filesFiltered)):
+            for j in range(i):
+                print(str(i)+','+str(j))
+                embeddings=mep.importTwo(filesFiltered[i], filesFiltered[j])
+                e0v=embeddings[0].evect
+                e1v=embeddings[1].evect
+                # oStab[i,j]=sm.orderingStability(e0v, e1v)
+                mDistChange[i,j]=np.sqrt(sm.averageSquaredPairwiseDistanceChange(e0v, e1v))
+                mDistChangeNormed[i,j]=np.sqrt(sm.averageSquaredPairwiseDistanceChange(sm.unitize(e0v), sm.unitize(e1v)))
+                closeChange[i,j]=sm.closePointsChange(e0v, e1v)
+                closeChangeNormed[i,j]=sm.closePointsChange(sm.unitize(e0v), sm.unitize(e1v))
+        mDistChange+=mDistChange.T
+        mDistChangeNormed+=mDistChangeNormed.T
+        closeChange+=closeChange.T
+        closeChangeNormed+=closeChangeNormed.T
+
+        # print(oStab)
+        print(mDistChange)
+        print(mDistChangeNormed)
+        print(closeChange)
+        print(closeChangeNormed)
+        # np.savetxt('orderStbility.csv',oStab,delimiter=', ')
+        np.savetxt('meanDistChangeEmbedding.csv',mDistChange,delimiter=', ')
+        np.savetxt('meanDistChangeEmbeddingNormed.csv',mDistChangeNormed,delimiter=', ')
+        np.savetxt('closeChangeEmbedding.csv',closeChange,delimiter=', ')
+        np.savetxt('closeChangeNormedEmbedding.csv',closeChangeNormed,delimiter=', ')
+
+def syntheticRuns():
+    # repcnt=1
+    # repShapes=[]
+    # for rep in range(repcnt):
+    #     repShapes.append(list(sp.iterRandoms(int(1e3), 50)))
+    # shapeSizes=list(map(len, repShapes))
+    # shapes=[]
+    # flipRepShapes=[[0,]*repcnt]*shapeSizes[0] # better all be the same size or we're in trouble.
+    # for i in range(repcnt):
+    #     for j in range(len(repShapes[i])):
+    #         flipRepShapes[j][i]=repShapes[i][j]
+    # for i in range(len(flipRepShapes)):
+    #     for j in range(len(flipRepShapes[i])):
+    #         shapes.append(flipRepShapes[i][j])
+    # print(list(sp.iterRandomsLabels()))
+    # print('replicating in a row '+str(repcnt)+'times')
+    shapes=list(sp.iterRandoms(int(1e3), 50))
+    mDistChange=np.zeros((len(shapes),len(shapes)))
+    mDistChangeNormed=np.zeros((len(shapes),len(shapes)))
+    closeChange= np.zeros((len(shapes),len(shapes)))
+    closeChangeNormed= np.zeros((len(shapes),len(shapes)))
+    for i in range(len(shapes)):
+        for j in range(i):
+            print(str(i)+', '+str(j))
+            mDistChange[i,j]=np.sqrt(sm.averageSquaredPairwiseDistanceChange(shapes[i], shapes[j]))
+            mDistChangeNormed[i,j]=np.sqrt(sm.averageSquaredPairwiseDistanceChange(sm.unitize(shapes[i]), sm.unitize(shapes[j])))
+            closeChange[i,j]=sm.closePointsChange(shapes[i], shapes[j])
+            closeChangeNormed[i,j]=sm.closePointsChange(sm.unitize(shapes[i]), sm.unitize(shapes[j]))
+    mDistChange+=mDistChange.T
+    mDistChangeNormed+=mDistChangeNormed.T
+    closeChange+=closeChange.T
+    closeChangeNormed+=closeChangeNormed.T
+
+    print(mDistChange)
+    np.savetxt('meanDistChangeSyntheticNotAligned.csv',mDistChange,delimiter=', ')
+    np.savetxt('meanDistChangeSyntheticNotAlignedNormed.csv',mDistChangeNormed,delimiter=', ')
+    np.savetxt('closeChangeSyntheticNotAligned.csv',closeChange,delimiter=', ')
+    np.savetxt('closeChangeNormedSyntheticNotAligned.csv',closeChangeNormed,delimiter=', ')
 
 if __name__=="__main__":
-    # ('Embeddings/GloVe-dim=50-corpus=brown.txt')
-    files=mep.ls_fullpath('Embeddings')
-    for f1, f2 in it.combinations(files,2):
-        embeddings=mep.importTwo(f1, f2)
-        print('E1: '+str(f1)+r'\n'+'E2: '+str(f2))
-        sm.runTests(embeddings[0].evect,embeddings[1].evect)
+    # embeddingSizes()
+    # embeddingSizesSynthetic()
+    # embeddingRuns()
+    syntheticRuns()

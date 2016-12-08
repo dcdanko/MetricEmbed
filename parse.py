@@ -18,13 +18,28 @@ def parse(filename):
 	return word_vecs
 
 embedding=namedtuple('embedding', 'dict evect vectkeys')
+def parseToEmbedding(filename):
+	"""
+	improved parse. returns an embedding object instead of a dictionary
+	:param filename:
+	:return:
+	"""
+	dict1 = parse(filename)
+	sorted_vocab = sorted(dict1.keys())
+	embed1 = np.array(list(map(lambda word: dict1[word], sorted_vocab)))
+	return embed1
+
 def importTwo(filename1, filename2):
 	"""
 	imports two files as embeddings,
-	orders the words by the 1st file and then returns two embedding objects, the 1st corresponding to the 1st file and the 2nd correesponding to the second"""
+	orders the words by the 1st file and then returns two embedding objects,
+	the 1st corresponding to the 1st file and the 2nd correesponding to the second
+
+	sorts so that the embedding vectors are the same ordering and have the same words (intersection of words)
+	"""
 	dict1 = parse(filename1)
 	dict2 = parse(filename2)
-	sorted_vocab = sorted(dict1)
+	sorted_vocab = sorted(dict1.keys() & dict2.keys())
 	embed1 = np.array(list(map(lambda word: dict1[word], sorted_vocab)))
 	embed2 = np.array(list(map(lambda word: dict2[word], sorted_vocab)))
 	return (embedding(dict1, embed1, sorted_vocab), embedding(dict2, embed2, sorted_vocab))
