@@ -46,7 +46,7 @@ def buildArgs():
 ################################################################################
 
 import sys
-import parse
+import embed_parse
 
 import numpy as np
 from scipy.stats import entropy
@@ -68,9 +68,32 @@ def main():
     '''
     
                                
-def getMetricEntropyVec(embedding,radii,pairMetric='euclidean',ntrials=5,normRange=True):
-    embeddingMatrix = embedding # in future embedding will be an object with metadata
+def getMetricEntropyDF(embedding,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+    '''
+    takes a rich embedding (see embed_parse.py) and outputs a data frame with metadata and metric entropies
+    '''
+    
+    embeddingMatrix = embedding.embedding.transpose() # in future embedding will be an object with metadata
+    metricEntropies,absRadii = getMetricEntropyVec(embeddingMatrix,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=normRange)
+    
+    df = pd.DataFrame.from_dict({'tool':embedding.tool,
+                                 'corpus':embedding.corpus,
+                                 'replicate':embedding.replicate,
+                                 'n-dimension':embedding.ndim,
+                                 'radius-absolute':absRadii,
+                                 'radius-relative':radii,
+                                 'pair-metric':pairMetric,
+                                 'metric-entropy':metricEntropies,})
+    return df
+
+                              
+def getMetricEntropyVec(embeddingMatrix,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+    '''
+    takes a matrix representing a word embedding and a vector of realtive radii
+    outputs a vector of metric entropies and a vector of absolute radii
+    '''
     avePairDist = pdist(embeddingMatrix,metric=pairMetric).mean()
+    radiiRel = radii
     radii = [r*avePairDist for r in radii]
     metricEntropies = []
     for r in radii:
@@ -79,11 +102,10 @@ def getMetricEntropyVec(embedding,radii,pairMetric='euclidean',ntrials=5,normRan
 
     metricEntropies = np.array( metricEntropies)
     if normRange:
-        norm = np.linalg.norm( metricEntropies)
+        norm = sum( metricEntropies)
         metricEntropies = metricEntropies / norm
 
-    df = pd.DataFrame.from_dict({'radius':radii, 'metric-entropy':metricEntropies})
-    return df
+    return metricEntropies, radii
 
 
 def compareVecs(mvec1,mvec2,vecMetric):
