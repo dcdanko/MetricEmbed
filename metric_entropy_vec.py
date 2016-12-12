@@ -69,18 +69,21 @@ def main():
     
                                
 def getMetricEntropyVec(embedding,radii,pairMetric='euclidean',ntrials=5,normRange=True):
-    avePairDist = pdist(embedding,metric=pairMetric).mean()
+    embeddingMatrix = embedding # in future embedding will be an object with metadata
+    avePairDist = pdist(embeddingMatrix,metric=pairMetric).mean()
     radii = [r*avePairDist for r in radii]
     metricEntropies = []
     for r in radii:
-        metricEntropy = estimateMetricEntropy(embedding,r,metric=pairMetric,ntrials=ntrials)
+        metricEntropy = estimateMetricEntropy(embeddingMatrix,r,metric=pairMetric,ntrials=ntrials)
         metricEntropies.append( metricEntropy)
 
     metricEntropies = np.array( metricEntropies)
     if normRange:
         norm = np.linalg.norm( metricEntropies)
         metricEntropies = metricEntropies / norm
-    return metricEntropies
+
+    df = pd.DataFrame.from_dict({'radius':radii, 'metric-entropy':metricEntropies})
+    return df
 
 
 def compareVecs(mvec1,mvec2,vecMetric):
@@ -100,9 +103,9 @@ def compareVecs(mvec1,mvec2,vecMetric):
 
 
 def metric_MetricEntropy(embed1, embed2, radii, pairMetric='euclidean',vecMetric='jsd',ntrials=5):
-    mvec1 = getMetricEntropyVec(embed1,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=False)
-    mvec2 = getMetricEntropyVec(embed2,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=False)
-    D = compareVecs(mvec1,mvec2,vecMetric)
+    df1 = getMetricEntropyVec(embed1,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=False)
+    df2 = getMetricEntropyVec(embed2,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=False)
+    D = compareVecs(df1['metric-entropy'],df2['metric-entropy'],vecMetric)
     return D
 
 
