@@ -32,8 +32,8 @@ def buildArgs():
     parser.add_argument('--radius-step', dest='step',type=float, default=0.05, help='Step between min and max radii')
     parser.add_argument('--pair-metric', dest='pair_metric',type=str, default='euclidean', help='Pairwise distance metric which will be used')
     parser.add_argument('--vec-metric', dest='vec_metric',type=str, default='jsd', help='Vector distance metric which will be used')
-    parser.add_argument('first_embedding',type=str,help='File containing the first embedding')
-    parser.add_argument('second_embedding',type=str,help='File containing the second embedding')
+    parser.add_argument('embeddings',nargs='+',help='File containing the first embedding')
+    #parser.add_argument('second_embedding',type=str,help='File containing the second embedding')
     
     parser.add_argument('--test',action='store_true',help="Run the program's built in tests. All other arguments will be ignored.")
     args = parser.parse_args()
@@ -46,7 +46,7 @@ def buildArgs():
 ################################################################################
 
 import sys
-import parse
+import embed_parse
 
 import numpy as np
 from scipy.stats import entropy
@@ -56,36 +56,63 @@ import pandas as pd
 
 def main():
     args = buildArgs()
-    emb1 = args.first_embedding
-    emb2 = args.second_embedding
-    emb1 = pd.DataFrame.from_dict(parse.parse(emb1))
-    emb2 = pd.DataFrame.from_dict(parse.parse(emb2))
-    D = compareMetricEntropies(emb1,
-                               emb2,
+    '''
+    embs = [(emb, pd.DataFrame.from_dict(parse.parse(emb))) for emb in args.embeddings]
+    D = compareMetricEntropies(embs,
                                minR=args.min_radius,
                                maxR=args.max_radius,
                                step=args.step,
                                pairMetric=args.pair_metric,
                                vecMetric=args.vec_metric,
                                ntrials=args.ntrials)
-    print("\n{}".format(D))
-                               
-def getMetricEntropyVec(embedding,minR,maxR,step,pairMetric,ntrials,normRange=True):
-    avePairDist = pdist(embedding,metric=pairMetric).mean()
-    minR = minR * avePairDist
-    maxR = maxR * avePairDist
-    step = step * avePairDist
-    radii = np.arange(minR,maxR+step,step)
+    '''
+
+def getAllMetricEntropyDFs(embeddings,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+    dfs =[]
+    for embedding in embeddings:
+        singledf = getMetricEntropyDF(embedding,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=normRange)
+        dfs.append( singledf)
+    return pd.concat(dfs)
+
+def getMetricEntropyDF(embedding,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+                           
+    '''
+    takes a rich embedding (see embed_parse.py) and outputs a data frame with metadata and metric entropies
+    '''
+    
+    embeddingMatrix = embedding.embedding.transpose() # in future embedding will be an object with metadata
+    metricEntropies,absRadii = getMetricEntropyVec(embeddingMatrix,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=normRange)
+    
+    df = pd.DataFrame.from_dict({'tool':embedding.tool,
+                                 'corpus':embedding.corpus,
+                                 'replicate':embedding.replicate,
+                                 'n-dimension':embedding.ndim,
+                                 'radius-absolute':absRadii,
+                                 'radius-relative':radii,
+                                 'pair-metric':pairMetric,
+                                 'metric-entropy':metricEntropies,})
+    return df
+
+
+def getMetricEntropyVec(embeddingMatrix,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+    '''
+    takes a matrix representing a word embedding and a vector of realtive radii
+    outputs a vector of metric entropies and a vector of absolute radii
+    '''
+    avePairDist = pdist(embeddingMatrix,metric=pairMetric).mean()
+    radiiRel = radii
+    radii = [r*avePairDist for r in radii]
     metricEntropies = []
     for r in radii:
-        metricEntropy = estimateMetricEntropy(embedding,r,metric=pairMetric,ntrials=ntrials)
+        metricEntropy = estimateMetricEntropy(embeddingMatrix,r,metric=pairMetric,ntrials=ntrials)
         metricEntropies.append( metricEntropy)
 
     metricEntropies = np.array( metricEntropies)
     if normRange:
-        norm = np.linalg.norm( metricEntropies)
+        norm = float(sum( metricEntropies))
         metricEntropies = metricEntropies / norm
-    return metricEntropies
+
+    return metricEntropies, radii
 
 
 def compareVecs(mvec1,mvec2,vecMetric):
@@ -103,20 +130,33 @@ def compareVecs(mvec1,mvec2,vecMetric):
         D = cdist(np.array(mvec1,ndmin=2),np.array(mvec2,ndmin=2),'vecMetric')[0,0]
     return D
 
-def compareMetricEntropies(emb1,emb2,
+
+def metric_MetricEntropy(embed1, embed2, radii, pairMetric='euclidean',vecMetric='jsd',ntrials=5):
+    df1 = getMetricEntropyVec(embed1,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=False)
+    df2 = getMetricEntropyVec(embed2,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=False)
+    D = compareVecs(df1['metric-entropy'],df2['metric-entropy'],vecMetric)
+    return D
+
+
+'''
+def compareMetricEntropies(embeddings,
                            minR=0.5,
                            maxR=2,
                            step=0.1,
                            pairMetric='euclidean',
                            vecMetric='jsd',
                            ntrials=5):
-    mvec1 = getMetricEntropyVec(emb1,minR,maxR,step,pairMetric,ntrials)
-    mvec2 = getMetricEntropyVec(emb2,minR,maxR,step,pairMetric,ntrials)
 
+    print('radii\t' + '\t'.join([str(el) for el in np.arange(minR,maxR+step,step)]))
+    for embName, emb in embeddings:
+        mvec1 = getMetricEntropyVec(emb,minR,maxR,step,pairMetric,ntrials,normRange=False)
+        print(embName + '\t' + '\t'.join([str(el) for el in mvec1]))
 
-    D = compareVecs(mvec1,mvec2,vecMetric)
-    return D
-    
+        
+
+    #D = compareVecs(mvec1,mvec2,vecMetric)
+    #return D
+''' 
 
 
 

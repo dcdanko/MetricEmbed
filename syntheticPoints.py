@@ -49,6 +49,18 @@ def randomCylinder(radii, heightOverRad, nsmpl):
     circularPos=randomInteriorSphere(nsmpl, len(radii))
     return np.hstack((circularPos, heights[:,np.newaxis]))
 
+def iterRandoms(nsmpl, dimSize):
+    yield randomSphere(nsmpl, dimSize)
+    yield randomHypercube(nsmpl, dimSize)
+    yield randomUnitSimplex(nsmpl, dimSize)
+    yield randomCylinder([1]*(dimSize-1), 10, nsmpl)
+
+def iterRandomsLabels():
+    yield 'random unit sphere'
+    yield 'random unit hypercube'
+    yield 'random unit simplex'
+    yield 'random unit circular cylinder, height 10'
+
 def draw3dSurface(points):
     fig=plt.figure()
     ax=fig.add_subplot(111,projection='3d')

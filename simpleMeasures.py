@@ -2,6 +2,13 @@ import numpy as np
 import sys
 import parse
 from collections import namedtuple
+import scipy.spatial.distance as spd
+import scipy.stats as sps
+
+def orderingStability(embed1, embed2):
+    e1dists=allPairwiseDistSqrd(embed1, embed1)
+    e2dists=allPairwiseDistSqrd(embed2, embed2)
+    return sps.spearmanr(e1dists, e2dists, axis=0)
 
 def allPairwiseDistSqrd(embed1, embed2):
     """
@@ -22,6 +29,9 @@ def averagePairwiseDistance(embed):
     """
     return np.mean(np.sqrt(allPairwiseDistSqrd(embed, embed)))
 
+def averageSquaredPairwiseDistanceChange(embed1, embed2):
+   return np.mean(pairwiseDistanceChange(embed1, embed2)**2)
+
 def pairwiseDistanceChange(embed1, embed2):
     """
 
@@ -30,6 +40,33 @@ def pairwiseDistanceChange(embed1, embed2):
     # assume the data is in the same order in each embedding (i.e. element 0 in embed1 corresponds to the same element 0 in embed2)
     return np.sqrt(allPairwiseDistSqrd(embed1, embed1))-np.sqrt(allPairwiseDistSqrd(embed2, embed2))
 
+def closePoints(embed):
+    allDist=allPairwiseDistSqrd(embed, embed)
+    closest=np.min(allDist,axis=1)
+    return closest
+
+def __closePointCost(embedIntoMatrix, embedCostMatrix):
+    closestWord=np.argmin(embedIntoMatrix,axis=1)
+    return np.mean(embedCostMatrix[np.arange(len(closestWord)), closestWord]-embedIntoMatrix[np.arange(len(closestWord)), closestWord])
+def closePointsChange(embed1, embed2):
+    """
+    computes the closest point to each point and then uses distance between the word-pair in the other embedding as a "cost"
+    then subtrcts the distance for the word-pair in the original embedding and computes the "regret"
+    then does it the other way around to get a "total cost"
+
+    represents the distance from the original embedding
+    negative numbers indicate that the word-pairs actually moved closer on the average
+    :param embed1:
+    :param embed2:
+    :return:
+    """
+    allDist1=np.sqrt(allPairwiseDistSqrd(embed1, embed1))
+    allDist1[np.arange(allDist1.shape[0]), np.arange(allDist1.shape[1])]=1e10 # should be big enough.
+    allDist2=np.sqrt(allPairwiseDistSqrd(embed2, embed2))
+    allDist2[np.arange(allDist2.shape[0]), np.arange(allDist2.shape[1])]=1e10 # should be big enough.
+    return (__closePointCost(allDist1, allDist2)+__closePointCost(allDist1, allDist2))/2
+
+# the following method looks plausible and runs, but the results DO NOT make sens for a metric (no symmtetric, for starters). I think I messed up my math.
 def minPairwiseDistChange(embed1,embed2):
     """
     solves the linear optimization problem defined by:
@@ -48,24 +85,17 @@ def minPairwiseDistChange(embed1,embed2):
     flat2=embed2.flatten()
     optScale=np.dot(avgVect,flat2)/np.dot(avgVect,avgVect)
     return optScale
-# design idea from overleaf checkup
-# %If the distance is defined:
-# %$$ d(x,y)=\sqrt{(x-y)^T (x-y)} $$
-#
-# %Then we simply compute the pairwise distance between each pair of words within an embedding:
-# %$$ d_{ij}=d(w_i, w_j) $$
-# %We can then compute summary statistics such as the mean, min, max, median and variance of the distances.
-# Different summary statistics will mean different features of the distances. For instance, a dataset with very
-# low variance will have words nearly equally spaced relative to each other.
-
-# %Pairwise distance is sensitive to the relative placement of words to each other, so by comparing the pairwise distances
-# between the same word in two different embeddings it is possible to compare how the "most similar words" will change. That
-# is, we expect the following to be highly correlated with which words embedding 1 ($E_1$) and embedding 2 ($E_2$) would rank
-# as most similar, particularly when looking at the closer pairs.tScale*avgVect-flat2
 
 sumStats=namedtuple('sumStats','mean stddev median min max')
 def getSumStats(elements):
-    return sumStats(np.mean(elements), np.std(elements), np.median(elements), np.min(elements), np.max(elements))
+    return sumStats(np.mean(elements), np.std(elements), np.median(elements), np.min(elements[np.logical_not(np.isclose(elements, 0))]), np.max(elements))
+def sumStatsListToSumStatsArrs(sumStatsList):
+    meanVect=np.zeros(len(sumStatsList))
+    stdVect=np.zeros(len(sumStatsList))
+    medianVect=np.zeros(len(sumStatsList))
+    minVect=np.zeros(len(sumStatsList))
+    maxVect=np.zeros(len(sumStatsList))
+    return (meanVect, stdVect, medianVect, minVect, maxVect)
 
 unitize=lambda sampleMat: sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
 
@@ -87,4 +117,4 @@ def runTests(embed1, embed2):
 
 if __name__=="__main__":
     embeddings=parse.importTwo(sys.argv[1], sys.argv[2])
-    runTests(embeddings[0].evect, embeddings[1].evect)
+    runTests(embeddings[0].evect, embeddings)
