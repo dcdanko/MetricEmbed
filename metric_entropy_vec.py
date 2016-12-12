@@ -66,9 +66,16 @@ def main():
                                vecMetric=args.vec_metric,
                                ntrials=args.ntrials)
     '''
-    
-                               
+
+def getAllMetricEntropyDFs(embeddings,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+    dfs =[]
+    for embedding in embeddings:
+        singledf = getMetricEntropyDF(embedding,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=normRange)
+        dfs.append( singledf)
+    return pd.concat(dfs)
+
 def getMetricEntropyDF(embedding,radii,pairMetric='euclidean',ntrials=5,normRange=True):
+                           
     '''
     takes a rich embedding (see embed_parse.py) and outputs a data frame with metadata and metric entropies
     '''
@@ -86,7 +93,7 @@ def getMetricEntropyDF(embedding,radii,pairMetric='euclidean',ntrials=5,normRang
                                  'metric-entropy':metricEntropies,})
     return df
 
-                              
+
 def getMetricEntropyVec(embeddingMatrix,radii,pairMetric='euclidean',ntrials=5,normRange=True):
     '''
     takes a matrix representing a word embedding and a vector of realtive radii
@@ -102,7 +109,7 @@ def getMetricEntropyVec(embeddingMatrix,radii,pairMetric='euclidean',ntrials=5,n
 
     metricEntropies = np.array( metricEntropies)
     if normRange:
-        norm = sum( metricEntropies)
+        norm = float(sum( metricEntropies))
         metricEntropies = metricEntropies / norm
 
     return metricEntropies, radii

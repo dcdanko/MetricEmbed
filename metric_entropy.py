@@ -160,7 +160,7 @@ def estimateMetricEntropy(embeddings,radius,metric='euclidean',ntrials=5):
     for arb in range(ntrials):
         coveringSpheres = findCoveringSpheres_fast(embeddings.T,metric, radius)
         estimates.append(len(coveringSpheres))
-
+    print(estimates)
     return min(estimates)
 
 

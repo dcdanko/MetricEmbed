@@ -31,7 +31,8 @@ def parseEmbeddingName(name):
         return (m['tool'], m['N'], m['corpus'], m['replicate'])
 
 def parseEmbeddingWithMetadata(filename):
-        df = pd.DataFrame.from_csv(filename,sep=' ',header=None)
+        df = pd.DataFrame.from_dict(parse(filename),orient='index')
+#        df = pd.DataFrame.from_csv(filename,sep=' ',header=None)
         tool,ndim,corpus,rep = parseEmbeddingName(filename)
         return RichEmbedding(tool,ndim,corpus,rep,df)
 
