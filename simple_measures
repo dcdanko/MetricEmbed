@@ -11,17 +11,17 @@ do
     word2vec -train $CORPUS -output Embeddings/w2v$i -size $SIZE
 done
 
-echo \n Comparing Embeddings
-for i in {1..5}
-do
-    for (( j = i + 1 ; j <= 5 ; j++ ))
-    do
-        python $METRIC Embeddings/w2v$i Embeddings/w2v$j >> $OUT
-    done
-done
+#echo \n Comparing Embeddings
+#for i in {1..5}
+#do
+#    for (( j = i + 1 ; j <= 5 ; j++ ))
+#    do
+#        python $METRIC Embeddings/w2v$i Embeddings/w2v$j >> $OUT
+#    done
+#done
 
-echo \n Deleting Embeddings
-for i in {1..5}
-do
-    rm -rf Embeddings/w2v$i
-done
+#echo \n Deleting Embeddings
+#for i in {1..5}
+#do
+#    rm -rf Embeddings/w2v$i
+#done
