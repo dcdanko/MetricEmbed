@@ -147,10 +147,15 @@ def compareEmbeddings(emb1,emb2,sampleRatio,initRad,radFactor,radCount):
     dimVector2 = globalFractalDimension(emb2,sampleRatio,initRad,radFactor,radCount,'emb2')
     return np.sqrt(np.sum(((dimVector1-dimVector2)**2)))
 
-def parseAndCompareEmbeddings(file1,file2):
+def parseAndCompareEmbeddings(file1,file2,iterations):
     embed1 = pd.DataFrame.from_dict(ep.parse(file1))
     embed2 = pd.DataFrame.from_dict(ep.parse(file2))
-    return compareEmbeddings(embed1,embed2,.005,0.,.00025,200)
+    distances = np.zeros(iterations)
+    for i in range(0,iterations):
+        distances[i] = compareEmbeddings(embed1,embed2,.005,0.,.00025,200)
+    mean = np.sum(distances) / iterations
+    variance = (1./float((iterations - 1))) * np.sum((distances - (mean * np.ones(iterations))) ** 2)
+    return mean,variance
 
 def plotEmbeddings(files):
     for filename in files:
