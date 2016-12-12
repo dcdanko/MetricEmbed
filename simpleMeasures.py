@@ -20,7 +20,7 @@ def allPairwiseDistSqrd(embed1, embed2):
     :return:
     """
     distances = (np.sum(embed1**2, axis=1)[:,np.newaxis])+(np.sum(embed2**2, axis=1)[:,np.newaxis]).T-2*np.dot(embed1,embed2.T)
-    distances[np.logical_and(distances < 0, distances > -1e-12)]=0
+    distances[np.logical_and(distances < 0, distances > -1e-8)]=0
     return distances
 
 def averagePairwiseDistance(embed):
