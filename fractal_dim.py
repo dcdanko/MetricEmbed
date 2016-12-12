@@ -46,7 +46,7 @@ import pandas as pd
 import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
-import parse
+import embed_parse
 
 
 def findPointClouds(embeddings,nSamples,radii,metric):
@@ -66,7 +66,7 @@ def findPointClouds(embeddings,nSamples,radii,metric):
 def main():
     args = buildArgs()
     #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
-    embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
+    embeddings = pd.DataFrame.from_dict(embed_parse.parse(args.embeddingf))
     cloudSizes = findPointClouds(embeddings,args.samples,args.radius,'euclidean')
     for r,s in cloudSizes.items():
         print('{},{}'.format(r,s))

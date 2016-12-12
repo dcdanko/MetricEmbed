@@ -46,7 +46,7 @@ def buildArgs():
 ################################################################################
 
 import sys
-import parse
+import embed_parse
 
 import numpy as np
 from scipy.stats import entropy
@@ -58,8 +58,8 @@ def main():
     args = buildArgs()
     emb1 = args.first_embedding
     emb2 = args.second_embedding
-    emb1 = pd.DataFrame.from_dict(parse.parse(emb1))
-    emb2 = pd.DataFrame.from_dict(parse.parse(emb2))
+    emb1 = pd.DataFrame.from_dict(embed_parse.parse(emb1))
+    emb2 = pd.DataFrame.from_dict(embed_parse.parse(emb2))
     D = compareMetricEntropies(emb1,
                                emb2,
                                minR=args.min_radius,
