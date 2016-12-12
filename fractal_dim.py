@@ -117,8 +117,9 @@ def fractalDimension(embedding,initRad,radFactor,radCount,eName):
     #return math.log(growthRate,radFactor)
     #return growthRate
 
-def globalFractalDimension(embedding,numSamples,initRad,radFactor,radCount,eName):
+def globalFractalDimension(embedding,sampleRatio,initRad,radFactor,radCount,eName):
     embeddingSize = embedding.shape[1]
+    numSamples = int(sampleRatio * embeddingSize)
     avgDist = sm.averagePairwiseDistance(embedding)
     centers = embedding.sample(numSamples,axis=1)
     distMatrix = scipy.spatial.distance.cdist(centers.T,embedding.T,metric='euclidean')
@@ -129,13 +130,33 @@ def globalFractalDimension(embedding,numSamples,initRad,radFactor,radCount,eName
         cloudSizes[radius] = np.sum(map(lambda x : 1 if x <= radius else 0, mins))
         radius = radius + (radFactor * avgDist)
     sizes,logs = getMultiplicativeGrowthRate(cloudSizes)
-    plt.plot(sizes,logs,label=eName)
+    #plt.plot(sizes,logs,label=eName)
+    dimVector = np.zeros(100)
+    sizeInc = (embeddingSize - numSamples) / 100
+    for i in range(0,100):
+        targetSize = numSamples + sizeInc * i
+        for j in range(0,len(sizes)):
+            if (sizes[j] > targetSize):
+                dimVector[i] = logs[j]
+                break
+    plt.plot(dimVector,label=eName)
+    return dimVector
+
+def compareEmbeddings(emb1,emb2,sampleRatio,initRad,radFactor,radCount):
+    dimVector1 = globalFractalDimension(emb1,sampleRatio,initRad,radFactor,radCount,'emb1')
+    dimVector2 = globalFractalDimension(emb2,sampleRatio,initRad,radFactor,radCount,'emb2')
+    return np.sqrt(np.sum(((dimVector1-dimVector2)**2)))
+
+def parseAndCompareEmbeddings(file1,file2):
+    embed1 = pd.DataFrame.from_dict(ep.parse(file1))
+    embed2 = pd.DataFrame.from_dict(ep.parse(file2))
+    return compareEmbeddings(embed1,embed2,.005,0.,.00025,200)
 
 def plotEmbeddings(files):
     for filename in files:
         embedding=pd.DataFrame.from_dict(ep.parse(filename))
         #fractalDimension(embedding,0.,.00025,200,filename)
-        globalFractalDimension(embedding,10,0.,.00025,200,filename)
+        globalFractalDimension(embedding,.005,0.,.00025,200,filename)
     plt.ylabel('fractal dimension')
     plt.xlabel('points seen')
     plt.legend()
@@ -147,13 +168,13 @@ def main():
     #embeddings = pd.DataFrame.from_dict(ep.parse(args.embeddingf))
     #dim = fractalDimension(embeddings,0.,.00025,200)
     #fractalDimension(synp.randomHypercube(200000,50).T,0.,.0005,400)
-    fractalDimension(synp.randomHypercube(7000,50).T,0.,.0005,400,'cube1')
-    globalFractalDimension(pd.DataFrame.from_dict(synp.randomHypercube(7000,50).T),10,0.,.0005,400,'cube2')
-    globalFractalDimension(pd.DataFrame.from_dict(synp.randomSphere(7000,50).T),10,0.,.0005,400,'sphere2')
-    fractalDimension(synp.randomSphere(7000,50).T,0.,.0005,400,'sphere1')
+    #fractalDimension(synp.randomHypercube(7000,50).T,0.,.0005,400,'cube1')
+    #globalFractalDimension(pd.DataFrame.from_dict(synp.randomHypercube(7000,50).T),10,0.,.0005,400,'cube2')
+    #globalFractalDimension(pd.DataFrame.from_dict(synp.randomSphere(7000,50).T),10,0.,.0005,400,'sphere2')
+    #fractalDimension(synp.randomSphere(7000,50).T,0.,.0005,400,'sphere1')
     #print('{}: {}'.format('Fractal Dimension',dim))
-    plt.legend()
-    plt.show()
+    #plt.legend()
+    #plt.show()
     #cloudSizes = findPointClouds(embeddings,args.samples,args.radius,'euclidean')
     #for r,s in cloudSizes.items():
     #    print('{},{}'.format(r,s))
