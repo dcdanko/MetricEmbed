@@ -5,7 +5,8 @@ from copy import copy, deepcopy
 import numpy as np
 import itertools as it
 
-filesList=(r'datasets/brown/master_noPunctuation',r'datasets/brown/master_noP_noLine')
+# filesList=(r'datasets/brown/master_noPunctuation',r'datasets/brown/master_noP_noLine', r'datasets/text8')
+filesList=(r'datasets/text8',)
 for file in filesList:
 	brownDocs=embed_parse.importToDoc(file)
 	totalWords=sum(brownDocs.lineLength)
