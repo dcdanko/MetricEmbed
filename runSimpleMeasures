@@ -128,5 +128,5 @@ def syntheticRuns():
 if __name__=="__main__":
     # embeddingSizes()
     # embeddingSizesSynthetic()
-    # embeddingRuns()
-    syntheticRuns()
+    embeddingRuns()
+    # syntheticRuns()

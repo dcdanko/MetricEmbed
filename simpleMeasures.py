@@ -88,6 +88,15 @@ def allPairwiseOrdering(embed1,embed2):
 	ordering=np.argsort(dist, axis=1)
 	return ordering
 
+#TODO: draw histogram of certain words with regards to distance
+
+def allPairwiseRank(embed1,embed2):
+	ordering=allPairwiseOrdering(embed1, embed2)
+	rank=np.ones(ordering.shape)
+	rank[np.arange(ordering.shape[0]),ordering]=np.tile(np.arange(ordering.shape[1]),(ordering.shape[0],1))
+	# TODO: check for equalities, assign same rank
+	return rank
+
 def averagePairwiseDistance(embed):
 	"""
 	Computes the average pairwise distance of the input embedding.
