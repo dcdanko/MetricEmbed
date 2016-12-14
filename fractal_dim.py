@@ -77,10 +77,11 @@ def getMultiplicativeGrowthRate(cloudSizes):
     """
     #print(cloudSizes)
     #sortedCloudSizes = filter(lambda x : x > 0.5, cloudSizes)
-    sortedRadii = filter(lambda x : cloudSizes[x] > 1.5, sorted(cloudSizes))
-    sortedCloudSizes = filter(lambda x : x > 1.5, map(lambda x : float(cloudSizes[x]), sortedRadii))
+    #sortedRadii = filter(lambda x : cloudSizes[x] > 1.5, sorted(cloudSizes))
+    sortedRadii = sorted(cloudSizes)
+    #sortedCloudSizes = filter(lambda x : x > 1.5, map(lambda x : float(cloudSizes[x]), sortedRadii))
     #sortedRadii = sorted(cloudSizes)
-    #sortedCloudSizes = map(lambda x : float(cloudSizes[x]), sortedRadii)
+    sortedCloudSizes = map(lambda x : float(cloudSizes[x]), sortedRadii)
     #print(sortedCloudSizes)
     countRatios = np.divide(sortedCloudSizes[1:],sortedCloudSizes[:-1])
     radiusRatios = np.divide(sortedRadii[1:],sortedRadii[:-1])
@@ -118,6 +119,9 @@ def fractalDimension(embedding,initRad,radFactor,radCount,eName):
     #return growthRate
 
 def globalFractalDimension(embedding,sampleRatio,initRad,radFactor,radCount,eName):
+    """
+    Computes the global fractal dimension of the given embedding.
+    """
     embeddingSize = embedding.shape[1]
     numSamples = int(sampleRatio * embeddingSize)
     avgDist = sm.averagePairwiseDistance(embedding)
@@ -125,22 +129,26 @@ def globalFractalDimension(embedding,sampleRatio,initRad,radFactor,radCount,eNam
     distMatrix = scipy.spatial.distance.cdist(centers.T,embedding.T,metric='euclidean')
     mins = np.amin(distMatrix, axis=0)
     cloudSizes = {}
+    radii = np.zeros(radCount)
     radius = initRad * avgDist
     for i in range(0,radCount):
+        radii[i] = radius / avgDist
         cloudSizes[radius] = np.sum(map(lambda x : 1 if x <= radius else 0, mins))
         radius = radius + (radFactor * avgDist)
     sizes,logs = getMultiplicativeGrowthRate(cloudSizes)
     #plt.plot(sizes,logs,label=eName)
-    dimVector = np.zeros(100)
-    sizeInc = (embeddingSize - numSamples) / 100
-    for i in range(0,100):
-        targetSize = numSamples + sizeInc * i
-        for j in range(0,len(sizes)):
-            if (sizes[j] > targetSize):
-                dimVector[i] = logs[j]
-                break
-    plt.plot(dimVector,label=eName)
-    return dimVector
+    plt.plot(radii[:-1],logs,label=eName)
+    #dimVector = np.zeros(100)
+    #sizeInc = (embeddingSize - numSamples) / 100
+    #for i in range(0,100):
+    #    targetSize = numSamples + sizeInc * i
+    #    for j in range(0,len(sizes)):
+    #        if (sizes[j] > targetSize):
+    #            dimVector[i] = logs[j]
+    #            break
+    #plt.plot(dimVector,label=eName)
+    #return dimVector
+    return radii[:-1],logs
 
 def compareEmbeddings(emb1,emb2,sampleRatio,initRad,radFactor,radCount):
     dimVector1 = globalFractalDimension(emb1,sampleRatio,initRad,radFactor,radCount,'emb1')
@@ -155,7 +163,7 @@ def parseAndCompareEmbeddings(file1,file2,iterations):
         distances[i] = compareEmbeddings(embed1,embed2,.005,0.,.00025,200)
     mean = np.sum(distances) / iterations
     variance = (1./float((iterations - 1))) * np.sum((distances - (mean * np.ones(iterations))) ** 2)
-    return mean,variance
+    return distances,mean,variance
 
 def plotEmbeddings(files):
     for filename in files:
@@ -163,8 +171,9 @@ def plotEmbeddings(files):
         #fractalDimension(embedding,0.,.00025,200,filename)
         globalFractalDimension(embedding,.005,0.,.00025,200,filename)
     plt.ylabel('fractal dimension')
-    plt.xlabel('points seen')
-    plt.legend()
+    #plt.xlabel('points seen')
+    plt.xlabel('radius as a fraction of average pairwise distance')
+    #plt.legend()
     plt.show()
 
 def main():
@@ -174,8 +183,8 @@ def main():
     #dim = fractalDimension(embeddings,0.,.00025,200)
     #fractalDimension(synp.randomHypercube(200000,50).T,0.,.0005,400)
     #fractalDimension(synp.randomHypercube(7000,50).T,0.,.0005,400,'cube1')
-    #globalFractalDimension(pd.DataFrame.from_dict(synp.randomHypercube(7000,50).T),10,0.,.0005,400,'cube2')
-    #globalFractalDimension(pd.DataFrame.from_dict(synp.randomSphere(7000,50).T),10,0.,.0005,400,'sphere2')
+    globalFractalDimension(pd.DataFrame.from_dict(synp.randomHypercube(70000,50).T),.005,0.,.00025,200,'cube2')
+    globalFractalDimension(pd.DataFrame.from_dict(synp.randomSphere(70000,50).T),.005,0.,.00025,200,'sphere2')
     #fractalDimension(synp.randomSphere(7000,50).T,0.,.0005,400,'sphere1')
     #print('{}: {}'.format('Fractal Dimension',dim))
     #plt.legend()
