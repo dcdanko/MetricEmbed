@@ -32,6 +32,7 @@ def parseEmbeddingName(name):
 
 def parseEmbeddingWithMetadata(filename):
         df = pd.DataFrame.from_dict(parse(filename),orient='index')
+#        df = pd.DataFrame.from_dict(parse(filename))
 #        df = pd.DataFrame.from_csv(filename,sep=' ',header=None)
         tool,ndim,corpus,rep = parseEmbeddingName(filename)
         return RichEmbedding(tool,ndim,corpus,rep,df)
@@ -69,6 +70,42 @@ def importTwo(filename1, filename2):
 	embed1 = np.array(list(map(lambda word: dict1[word], sorted_vocab)))
 	embed2 = np.array(list(map(lambda word: dict2[word], sorted_vocab)))
 	return (embedding( dict1, embed1, sorted_vocab), embedding(dict2, embed2, sorted_vocab))
+
+def importWordList(filename, sep=' '):
+	"""
+	imports documents into a list of lists. Each list in the top level list is a "document" as defined by the presence of a new line.
+	Each element of the lower level list is a word, as defined by th seperator function
+	:param filename:
+	:param sep: the seperator function. If you insert a string (str) will use str.split(sep). Otherwise use a function that takes in one argument (the line) and returns an array of words
+	:return:
+	"""
+	with open(filename) as f:
+		lineList=f.readlines()
+	if isinstance(sep, str):
+		wordList=[line.split(sep) for line in lineList]
+	else:
+		wordList=[sep(line) for line in lineList]
+	return wordList
+def writeWordList(filename, wordList, sep=' '):
+	"""
+	performs the inverse of importDocs, takes in the filename to write and the docs. Merges the lower-level array with sep and writes to file.
+	:param filename:
+	:param sep:
+	:return: nothing
+	"""
+	if isinstance(sep, str):
+		merger=sep.join
+	else:
+		merger=sep
+	with open(filename, 'w') as f:
+		for line in wordList:
+			f.write(merger(line))
+docs=namedtuple('docs','lineLength words')
+def toDoc(wordList):
+	lineLength=[len(line) for line in wordList]
+	return docs(lineLength, wordList)
+def importToDoc(fileName, sep=' '):
+	return toDoc(importWordList(fileName,sep))
 
 def ls_fullpath(dir):
 	return [os.path.join(dir,f) for f in os.listdir(dir)]

@@ -48,7 +48,7 @@ import pandas as pd
 import numpy as np
 import scipy.spatial.distance
 import subprocess as sp
-import parse
+import embed_parse
 
 class Sphere:
     def __init__(self,centerWord,centerVec):
@@ -168,7 +168,7 @@ def estimateMetricEntropy(embeddings,radius,metric='euclidean',ntrials=5):
 def main():
     args = buildArgs()
     #embeddings = pd.DataFrame.from_csv(args.embeddingf,sep=args.sep,header=None)
-    embeddings = pd.DataFrame.from_dict(parse.parse(args.embeddingf))
+    embeddings = pd.DataFrame.from_dict(embed_parse.parse(args.embeddingf))
     nSpheres = []
     for radius in args.radius:
         # coveringSpheres = findCoveringSpheres(embeddings.T,scipy.spatial.distance.euclidean,radius)
