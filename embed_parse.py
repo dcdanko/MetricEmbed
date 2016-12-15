@@ -32,6 +32,7 @@ def parseEmbeddingName(name):
 
 def parseEmbeddingWithMetadata(filename):
         df = pd.DataFrame.from_dict(parse(filename),orient='index')
+        df.fillna(value=0,inplace=True)
 #        df = pd.DataFrame.from_dict(parse(filename))
 #        df = pd.DataFrame.from_csv(filename,sep=' ',header=None)
         tool,ndim,corpus,rep = parseEmbeddingName(filename)

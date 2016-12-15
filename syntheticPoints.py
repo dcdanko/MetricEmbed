@@ -1,7 +1,7 @@
 import numpy as np
 import itertools as it
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D #it's tempting. don't delete.
+#import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D #it's tempting. don't delete.
 
 def hypercubeVerticies(dimSize):
     return np.array(list(it.product((0,1),repeat=dimSize)))

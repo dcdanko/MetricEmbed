@@ -70,6 +70,7 @@ def main():
 def getAllMetricEntropyDFs(embeddings,radii,pairMetric='euclidean',ntrials=5,normRange=True):
     dfs =[]
     for embedding in embeddings:
+        sys.stderr.write('Evaluating: {}\n'.format(embedding))
         singledf = getMetricEntropyDF(embedding,radii,pairMetric=pairMetric,ntrials=ntrials,normRange=normRange)
         dfs.append( singledf)
     return pd.concat(dfs)
@@ -104,6 +105,7 @@ def getMetricEntropyVec(embeddingMatrix,radii,pairMetric='euclidean',ntrials=5,n
     radii = [r*avePairDist for r in radii]
     metricEntropies = []
     for r in radii:
+        sys.stderr.write('\tRadius: {}\n'.format(r))
         metricEntropy = estimateMetricEntropy(embeddingMatrix,r,metric=pairMetric,ntrials=ntrials)
         metricEntropies.append( metricEntropy)
 

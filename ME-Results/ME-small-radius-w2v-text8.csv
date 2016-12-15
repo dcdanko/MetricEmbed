@@ -1,0 +1,4 @@
+	corpus	metric-entropy	n-dimension	pair-metric	radius-absolute	radius-relative	replicate	tool
+0	text8	66650	50	euclidean	0.7824136305349667	0.003125	2	w2v
+0	text8	66709	50	euclidean	0.7806727670642597	0.003125	3	w2v
+0	text8	71200	100	euclidean	0.6072371460013691	0.003125	1	w2v

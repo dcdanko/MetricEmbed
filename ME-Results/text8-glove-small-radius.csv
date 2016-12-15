@@ -1,0 +1,4 @@
+	corpus	metric-entropy	n-dimension	pair-metric	radius-absolute	radius-relative	replicate	tool
+0	text8	71290	50	euclidean	0.3893671715044132	0.003125	2	GloVe
+0	text8	71290	50	euclidean	0.38870176127088996	0.003125	3	GloVe
+0	text8	71290	50	euclidean	0.38833346158999893	0.003125	1	GloVe
