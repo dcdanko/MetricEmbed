@@ -3,6 +3,8 @@ from collections import Counter
 from scipy.sparse import lil_matrix
 import scipy.sparse.linalg
 import fractal_dim as fd
+import embed_parse as ep
+import pandas as pd
 
 ## This Counter will record total term frequencies -- the number of 
 ##  tokens of each type in the corpus
@@ -74,8 +76,14 @@ doc_matrix, singular_values, word_matrix = scipy.sparse.linalg.svds(doc_term_mat
 ## Transpose the word_matrix so that columns correspond to latent dimensions in both matrices 
 word_matrix = word_matrix.T
 
-fd.fractalDimension(word_matrix.T,0.,.000125,400,'LSA')
-fd.plotEmbeddings(['Embeddings/w2v1','Embeddings/w2v2','Embeddings/w2v3','Embeddings/w2v4','Embeddings/w2v5'])
+word_vecs = {}
+for term,term_id in vocab_ids.iteritems():
+    word_vecs[term] = word_matrix[term_id]
+df = pd.DataFrame.from_dict(word_vecs,orient='index')
+df.to_csv(sys.argv[2], sep=' ')
+
+#fd.fractalDimension(word_matrix.T,0.,.000125,400,'LSA')
+#fd.plotEmbeddings(['Embeddings/w2v1','Embeddings/w2v2','Embeddings/w2v3','Embeddings/w2v4','Embeddings/w2v5'])
 
 def print_sorted(x, labels):
     sorted_labels = sorted(enumerate(x), key=lambda w: -w[1])
