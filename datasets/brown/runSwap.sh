@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 OUT=results.txt
 SIZE=50
@@ -6,7 +6,8 @@ CORPUS=master_noP_noLine
 METRIC=simpleMeasures.py
 
 echo Creating Embeddings
-SWAPPEDFILES=$(ls *_swap*)
+#SWAPPEDFILES=$(ls *_swap*)
+SWAPPEDFILES=$(ls master_no*_rep*)
 #SWAPPEDFILES=(text8_swap3401041 text8_swap510562 text8_swap6802083 text8_swap8502604)
 for swapFile in $SWAPPEDFILES
 do
@@ -16,10 +17,10 @@ echo $FOLDER
 if [ ! -d $FOLDER ]; then
 mkdir $FOLDER
 fi
-for i in {1..5}
-do
+#for i in {1..5}
+		i=1
     word2vec -train $swapFile -output $FOLDER/w2v$i -size $SIZE
-done
+#done
 done
 
 #echo \n Comparing Embeddings
