@@ -37,7 +37,7 @@ def distributeNumpy(numArraySize=int(50e3), accumulator=None, initialVal=None, f
 		stack=True
 	def distributeNumpy_decorator(f):
 		if not disableDistribute:
-			@wraps(f)
+
 			def distributedF(*args, **kwargs):
 				numElem=args[0].shape[0]
 				indxBreaks=list(range(0,numElem,numArraySize))
@@ -59,10 +59,53 @@ def distributeNumpy(numArraySize=int(50e3), accumulator=None, initialVal=None, f
 			return f
 	return distributeNumpy_decorator
 
+__globalCache=dict()
+cashEmbed=namedtuple('cashEmbed', 'key embed')
+def cacheMakerTwoEmbed(f):
+	"""
+	creates cached versions of functions where the arguments are two numpy embedding arrays and ordering doesn't matter
+	:param f:
+	:return:
+	"""
+
+	def cachedF(embed1, embed2):
+		if isinstance(embed1, cashEmbed) and isinstance(embed2, cashEmbed):
+			cacheKey=(f, embed1.key, embed2.key)
+			if cacheKey in __globalCache.keys():
+				print('cache hit:'+str(cacheKey))
+				return __globalCache[cacheKey]
+			else:
+				ret=f(embed1, embed2)
+				__globalCache[cacheKey]=ret
+				if embed1.key != embed2.key:
+					transposedKey=(f,embed2.key, embed1.key)
+					__globalCache[transposedKey]=ret
+				return ret
+
+def cacheMakerOneEmbed(f):
+	"""
+	creates cached versions of functions where the arguments are one numpy embedding array
+	:param f:
+	:return:
+	"""
+
+	def cachedF(embed1):
+		if isinstance(embed1, cashEmbed):
+			cacheKey=(f, embed1.key)
+			if cacheKey in __globalCache.keys():
+				print('cache hit:'+str(cacheKey))
+				return __globalCache[cacheKey]
+			else:
+				ret=f(embed1)
+				__globalCache[cacheKey]=ret
+				return ret
+
+
 def orderingStability(embed1, embed2):
 	e1dists=allPairwiseDistSqrd(embed1, embed1)
 	e2dists=allPairwiseDistSqrd(embed2, embed2)
 	return sps.spearmanr(e1dists, e2dists, axis=0)
+
 
 def allPairwiseDistSqrd(embed1, embed2):
 	"""
@@ -77,6 +120,7 @@ def allPairwiseDistSqrd(embed1, embed2):
 	distances[np.logical_and(distances < 0, distances > -1e-8)]=0
 	return distances
 
+
 def allPairwiseOrdering(embed1,embed2):
 	"""
 	returns an array where each row is a word in embed1 (in the same order) and each element of each row is an index corresopnding to a word in embed2. The rows are order from the closest word to the farthest
@@ -89,6 +133,7 @@ def allPairwiseOrdering(embed1,embed2):
 	return ordering
 
 #TODO: draw histogram of certain words with regards to distance
+
 
 def allPairwiseRank(embed1,embed2):
 	ordering=allPairwiseOrdering(embed1, embed2)
@@ -103,8 +148,10 @@ def averagePairwiseDistance(embed):
 	"""
 	return np.mean(np.sqrt(allPairwiseDistSqrd(embed, embed)))
 
+
 def averageSquaredPairwiseDistanceChange(embed1, embed2):
    return np.mean(pairwiseDistanceChange(embed1, embed2)**2)
+
 
 def pairwiseDistanceChange(embed1, embed2):
 	"""
@@ -114,6 +161,7 @@ def pairwiseDistanceChange(embed1, embed2):
 	# assume the data is in the same order in each embedding (i.e. element 0 in embed1 corresponds to the same element 0 in embed2)
 	return np.sqrt(allPairwiseDistSqrd(embed1, embed1))-np.sqrt(allPairwiseDistSqrd(embed2, embed2))
 
+
 def closePoints(embed):
 	allDist=allPairwiseDistSqrd(embed, embed)
 	closest=np.min(allDist,axis=1)
@@ -122,6 +170,8 @@ def closePoints(embed):
 def __closePointCost(embedIntoMatrix, embedCostMatrix):
 	closestWord=np.argmin(embedIntoMatrix,axis=1)
 	return np.mean(embedCostMatrix[np.arange(len(closestWord)), closestWord]-embedIntoMatrix[np.arange(len(closestWord)), closestWord])
+
+
 def closePointsChange(embed1, embed2):
 	"""
 	computes the closest point to each point and then uses distance between the word-pair in the other embedding as a "cost"
@@ -138,9 +188,10 @@ def closePointsChange(embed1, embed2):
 	allDist1[np.arange(allDist1.shape[0]), np.arange(allDist1.shape[1])]=1e10 # should be big enough.
 	allDist2=np.sqrt(allPairwiseDistSqrd(embed2, embed2))
 	allDist2[np.arange(allDist2.shape[0]), np.arange(allDist2.shape[1])]=1e10 # should be big enough.
-	return (__closePointCost(allDist1, allDist2)+__closePointCost(allDist1, allDist2))/2
+	return (__closePointCost(allDist2, allDist1)+__closePointCost(allDist1, allDist2))/2
 
 # the following method looks plausible and runs, but the results DO NOT make sens for a metric (no symmtetric, for starters). I think I messed up my math.
+
 def minPairwiseDistChange(embed1,embed2):
 	"""
 	solves the linear optimization problem defined by:
@@ -161,8 +212,11 @@ def minPairwiseDistChange(embed1,embed2):
 	return optScale
 
 sumStats=namedtuple('sumStats','mean stddev median min max')
+
 def getSumStats(elements):
 	return sumStats(np.mean(elements), np.std(elements), np.median(elements), np.min(elements[np.logical_not(np.isclose(elements, 0))]), np.max(elements))
+
+
 def sumStatsListToSumStatsArrs(sumStatsList):
 	meanVect=np.zeros(len(sumStatsList))
 	stdVect=np.zeros(len(sumStatsList))
@@ -171,7 +225,44 @@ def sumStatsListToSumStatsArrs(sumStatsList):
 	maxVect=np.zeros(len(sumStatsList))
 	return (meanVect, stdVect, medianVect, minVect, maxVect)
 
-unitize=lambda sampleMat: sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
+
+def unitize(sampleMat):
+	return sampleMat/(np.linalg.norm(sampleMat,axis=1)[:,np.newaxis])
+
+"""
+cached versions of functions
+"""
+# orderingStability_c=cacheMakerTwoEmbed(orderingStability)
+# allPairwiseDistSqrd_c=cacheMakerTwoEmbed(allPairwiseDistSqrd)
+# allPairwiseOrdering_c=cacheMakerTwoEmbed(allPairwiseOrdering)
+# allPairwiseRank_c=cacheMakerTwoEmbed(allPairwiseRank)
+# averagePairwiseDistance_c=cacheMakerOneEmbed(averagePairwiseDistance)
+# pairwiseDistanceChange_c=cacheMakerTwoEmbed(pairwiseDistanceChange)
+# closePoints_c=cacheMakerOneEmbed(closePoints)
+# minPairwiseDistChange_c=cacheMakerTwoEmbed(minPairwiseDistChange)
+# getSumStats_c=cacheMakerOneEmbed(getSumStats)
+# sumStatsListToSumStatsArrs_c=cacheMakerOneEmbed(sumStatsListToSumStatsArrs)
+
+def __getCachedPairwiseDistSqrd(c_embed):
+	lookupKey=('sqrdD',c_embed.key)
+	if lookupKey in __globalCache.keys():
+		return __globalCache[lookupKey]
+	else:
+		ret=allPairwiseDistSqrd(c_embed.embed, c_embed.embed)
+		__globalCache[lookupKey]=ret
+		return ret
+
+def averageSquaredPairwiseDistanceChange_c(c_embed1, c_embed2):
+	sqrdD1=__getCachedPairwiseDistSqrd(c_embed1)
+	sqrdD2=__getCachedPairwiseDistSqrd(c_embed2)
+	return np.mean((np.sqrt(sqrdD1)-np.sqrt(sqrdD2))**2)
+
+def closePointsChange_c(c_embed1, c_embed2):
+	allDist1=np.sqrt(__getCachedPairwiseDistSqrd(c_embed1))
+	allDist1[np.arange(allDist1.shape[0]), np.arange(allDist1.shape[1])]=1e10 # should be big enough.
+	allDist2=np.sqrt(__getCachedPairwiseDistSqrd(c_embed2))
+	allDist2[np.arange(allDist2.shape[0]), np.arange(allDist2.shape[1])]=1e10 # should be big enough.
+	return (__closePointCost(allDist2, allDist1)+__closePointCost(allDist1, allDist2))/2
 
 def runTests(embed1, embed2):
 	print('ordinary tests')
