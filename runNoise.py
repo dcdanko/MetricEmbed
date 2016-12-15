@@ -5,15 +5,15 @@ from copy import copy, deepcopy
 import numpy as np
 import itertools as it
 
-# filesList=(r'datasets/brown/master_noPunctuation',r'datasets/brown/master_noP_noLine', r'datasets/text8')
+filesList=(r'datasets/brown/master_noPunctuation',r'datasets/brown/master_noP_noLine', r'datasets/text8')
 # filesList=(r'datasets/text8',)
-filesList=(r'datasets/brown/master_noPunctuation',r'datasets/brown/master_noP_noLine')
+# filesList=(r'datasets/brown/master_noPunctuation',r'datasets/brown/master_noP_noLine')
 for file in filesList:
 	brownDocs=embed_parse.importToDoc(file)
 	totalWords=sum(brownDocs.lineLength)
 	numToSwap=np.arange(totalWords*0.1,totalWords,totalWords*0.2,dtype=int)
 	totaln=0
-	for rep in range(5):
+	for rep in range(3):
 		for n in np.diff(np.concatenate((np.array((0,)),numToSwap))):
 		# for n in np.diff(np.concatenate((np.array((0,)),numToSwap))): # to reshuffle on each step
 			# copyDoc=docs(brownDocs.lineLength,deepcopy(brownDocs.words)) # to reshuffle on each step

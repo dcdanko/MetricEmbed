@@ -75,6 +75,7 @@ def importWordList(filename, sep=' '):
 	"""
 	imports documents into a list of lists. Each list in the top level list is a "document" as defined by the presence of a new line.
 	Each element of the lower level list is a word, as defined by th seperator function
+	strips newline characters from words.
 	:param filename:
 	:param sep: the seperator function. If you insert a string (str) will use str.split(sep). Otherwise use a function that takes in one argument (the line) and returns an array of words
 	:return:
@@ -85,7 +86,15 @@ def importWordList(filename, sep=' '):
 		wordList=[line.split(sep) for line in lineList]
 	else:
 		wordList=[sep(line) for line in lineList]
+	stripNewlines(wordList)
 	return wordList
+
+def stripNewlines(wordList):
+	for line in wordList:
+		for indx in range(len(line)):
+			word=line[indx]
+			line[indx]=word.rstrip('\n\r')
+
 def writeWordList(filename, wordList, sep=' '):
 	"""
 	performs the inverse of importDocs, takes in the filename to write and the docs. Merges the lower-level array with sep and writes to file.
@@ -97,9 +106,9 @@ def writeWordList(filename, wordList, sep=' '):
 		merger=sep.join
 	else:
 		merger=sep
+	mergeAndNewline=lambda line: merger(line)+'\n'
 	with open(filename, 'w') as f:
-		for line in wordList:
-			f.write(merger(line))
+		f.writelines(map(mergeAndNewline,wordList))
 docs=namedtuple('docs','lineLength words')
 def toDoc(wordList):
 	lineLength=[len(line) for line in wordList]
