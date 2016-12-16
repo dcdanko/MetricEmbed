@@ -2,6 +2,7 @@ import numpy as np
 import scipy.stats as sps
 import math
 import itertools as it
+from functools import wraps
 
 def oneProportionZTtest(a,b):
 	"""
@@ -48,7 +49,7 @@ def permuteTest(treatmentLevel, expirimentalResult, ntest, functionToCompare):
 		toTest=list(it.permutations(range(len(treatmentLevel))))
 	else:
 		toTest=generateShuffles(len(treatmentLevel),ntest)
-	testRes=list(map(lambda permute: functionToCompare(treatmentLevel[permute],expirimentalResult[permute]),toTest))
+	testRes=list(map(lambda permute: functionToCompare(treatmentLevel,expirimentalResult[permute]),toTest)) # perfrom permutation on expirimental result
 	return np.array(testRes)
 
 def generateShuffles(nelem, nshuffle):
@@ -99,17 +100,48 @@ the following are for chekcing monotonicity
 """
 the following are intended to test if the values of different groups are the same
 """
-# see sps.ttest_ind(pop1, pop2, equal_var=false). This is the proper test assuming that the mean is a good measure of centrality in noise.
+def welchTtest(pop1,pop2):
+	"""
+	This is the proper test assuming that the mean is a good measure of centrality in noise.
+	:param pop1:
+	:param pop2:
+	:return:
+	"""
+	return sps.ttest_ind(pop1, pop2, equal_var=False)
 
 def __toTreatAndExpr(pop1, pop2):
 	treat=np.concatenate((np.zeros(len(pop1)), np.ones(len(pop2))))
 	expr=np.concatenate((pop1,pop2))
 	return treat, expr
+def __groupIntoPops(zeroOneGroups,vals):
+	sortIndxs=np.argsort(zeroOneGroups)
+	sortZeroOne=zeroOneGroups[sortIndxs]
+	breakpt=np.where(np.diff(sortZeroOne)>0)
+	sortVals=vals[sortIndxs]
+	assert len(breakpt)==1
+	pop1=sortVals[:(breakpt-1)]
+	pop2=sortVals[breakpt:]
+	assert(len(pop1) > 0 and len(pop2) >0 )
+	return pop1, pop2
+
+def __wrapFunction(f):
+	@wraps(f)
+	def wrappedF(zeroOneGroups, values):
+		pop1, pop2=__groupIntoPops(zeroOneGroups, values)
+		return f(pop1,pop2)
+	return wrappedF
+
 def permuteTestPop(pop1, pop2, ntest, functionToCompare):
+	# is this correct? need to wrap functionToCompare to change argument types.
+	# more to the point, the permutation testing is going to consider groupings of uneven size
 	t,e=__toTreatAndExpr(pop1,pop2)
-	permuteTest(t,e,ntest,functionToCompare)
+	return permuteTest(t,e,ntest,functionToCompare)
+def permutePtestPop(pop1, pop2, ntest, functionToCompare):
+	permuteRes=permuteTestPop(pop1,pop2,ntest,functionToCompare)
+	thisRes=functionToCompare(pop1,pop2)
+	return np.mean(thisRes<permuteRes)
 
 def resampleTestPop(pop1, pop2, ntest, functionToCompare):
 	t,e=__toTreatAndExpr(pop1,pop2)
-	resampleTest(t,e,ntest,functionToCompare)
+	return resampleTest(t,e,ntest,functionToCompare)
 
